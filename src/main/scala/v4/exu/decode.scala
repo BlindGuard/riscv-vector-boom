@@ -290,6 +290,10 @@ object DecodeTables
     CUSTOM3_RD_RS1     -> List(Y, N, uopROCC   , fc2oh(FC_CSR) , RT_FIX, RT_FIX, RT_X  , N, IS_N, N, N, N, M_X     , N, N, CSR.N, DW_X  , aluFn.FN_X   ),
     CUSTOM3_RD_RS1_RS2 -> List(Y, N, uopROCC   , fc2oh(FC_CSR) , RT_FIX, RT_FIX, RT_FIX, N, IS_N, N, N, N, M_X     , N, N, CSR.N, DW_X  , aluFn.FN_X   )
   )
+  val V_table: Array[(BitPat, List[BitPat])] = Array(
+    FLW                -> List(Y, Y, uopLD     , fc2oh(FC_AGEN), RT_FLT, RT_FIX, RT_X  , N, IS_I, Y, N, N, M_XRD   , N, N, CSR.N, DW_X  , aluFn.FN_X   ),
+    FNMSUB_D           -> List(Y, Y, uopFNMSUB_D,fc2oh(FC_FPU) , RT_FLT, RT_FLT, RT_FLT, Y, IS_N, N, N, N, M_X     , N, N, CSR.N, DW_X  , aluFn.FN_X   )
+  )
 }
 // scalastyle:on
 

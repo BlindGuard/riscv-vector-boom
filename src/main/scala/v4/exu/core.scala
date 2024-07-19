@@ -98,6 +98,9 @@ class BoomCore()(implicit p: Parameters) extends BoomModule
   // Meanwhile, the FP pipeline holds the FP issue window, FP regfile, and FP arithmetic units.
   val fp_pipeline = Module(new FpPipeline)
 
+  // vector processing pipeline
+  val vp_pipeline = Module(new VpPipeline)
+
   // ********************************************************
   // Clear fp_pipeline before use
   fp_pipeline.io.ll_wports := DontCare

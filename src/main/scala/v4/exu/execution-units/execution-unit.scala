@@ -691,3 +691,8 @@ class FPExeUnit(val hasFDiv: Boolean = false, val hasFpiu: Boolean = false)(impl
 
   io_ready_fu_types := get_ready_fu_types
 }
+
+class VPExeUnit()(implicit p: Parameters) extends ExecutionUnit("VPU")
+{
+  val vpu = Module(new VPUUnit)
+}

@@ -118,6 +118,7 @@ trait ScalarOpConstants
   val IQ_UNQ = 1
   val IQ_ALU = 2
   val IQ_FP  = 3
+  val IQ_VP  = 5
 
   // Functional unit select
   // bit mask, since a given execution pipeline may support multiple functional units

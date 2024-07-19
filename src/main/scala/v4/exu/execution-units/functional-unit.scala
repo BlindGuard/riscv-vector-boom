@@ -454,3 +454,11 @@ class PipelinedMulUnit(numStages: Int, dataWidth: Int)(implicit p: Parameters)
   io.resp.bits.data    := imul.io.resp.bits.data
   io.resp.bits.predicated := false.B
 }
+
+class VPUUnit(dataWidth: Int)(implicit p: Parameters)
+  extends FunctionalUnit(
+    dataWidth = dataWidth)
+{
+  val pipe = Module(new BranchKillablePipeline(new FuncUnitReq(dataWidth), numStages))
+  val vpu = Module(new VPU())
+}
