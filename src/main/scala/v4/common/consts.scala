@@ -122,7 +122,7 @@ trait ScalarOpConstants
 
   // Functional unit select
   // bit mask, since a given execution pipeline may support multiple functional units
-  val FC_SZ  = 10
+  val FC_SZ  = 11
 
   val FC_ALU  = 0
   val FC_AGEN = 1
@@ -134,6 +134,7 @@ trait ScalarOpConstants
   val FC_FDV  = 7
   val FC_I2F  = 8
   val FC_F2I  = 9
+  val FC_VPU  = 10
 
   // Micro-op opcodes
   // TODO change micro-op opcodes into using enum

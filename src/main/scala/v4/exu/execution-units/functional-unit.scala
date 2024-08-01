@@ -457,8 +457,35 @@ class PipelinedMulUnit(numStages: Int, dataWidth: Int)(implicit p: Parameters)
 
 class VPUUnit(dataWidth: Int)(implicit p: Parameters)
   extends FunctionalUnit(
-    dataWidth = dataWidth)
+  //numBypassStages = 0,
+    dataWidth = dataWidth,
+    needsFcsr = true)
 {
+  io.req.ready := true.B
+  // what is dfmaLatency? 
+  // reuse the value from fp?
+  val numStages = p(tile.TileKey).core.fpu.get.dfmaLatency
+
+  // pipeline parameters that wrap around request??
   val pipe = Module(new BranchKillablePipeline(new FuncUnitReq(dataWidth), numStages))
+  pipe.io.req := io.req
+  pipe.io.flush := io.kill
+  pipe.io.brupdate := io.brupdate
+
+  // vpu instance
+  // connect to request
   val vpu = Module(new VPU())
+  vpu.io.req.valid         := io.req.valid
+  vpu.io.req.bits.uop      := io.req.bits.uop
+  vpu.io.req.bits.rs1_data := io.req.bits.rs1_data
+  vpu.io.req.bits.rs2_data := io.req.bits.rs2_data
+  vpu.io.req.bits.rs3_data := io.req.bits.rs3_data
+  vpu.io.req.bits.fcsr_rm  := io.fcsr_rm
+
+  // connect response
+  io.resp.valid        := pipe.io.resp(numStages-1).valid
+  io.resp.bits.uop     := pipe.io.resp(numStages-1).bits.uop
+  io.resp.bits.data    := vpu.io.resp.bits.data
+  io.resp.bits.fflags.valid := io.resp.valid
+  io.resp.bits.fflags.bits  := vpu.io.resp.bits.fflags.bits
 }

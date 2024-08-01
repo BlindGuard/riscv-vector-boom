@@ -37,10 +37,16 @@ trait HasVPUCtrlSigs {
   val wflags = Bool()
 }
 
+// what is dfmaLatency??
+case class VPUParams(
+  vecWidth: Int = 64,
+  dfmaLatency: Int = 4
+)
+
 trait HasVPUParameters {
   // HasFPUParameters here:
   // https://github.com/chipsalliance/rocket-chip/blob/dbcb06afe1c76d1129cb6d264949322a34c37185/src/main/scala/tile/FPU.scala#L304
-  fLen: Int = 512
+  vecWidth: Int
 }
 
 // ????
