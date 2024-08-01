@@ -40,10 +40,13 @@ case class BoomCoreParams(
   numIntPhysRegisters: Int = 48,
   numFpPhysRegisters: Int = 48,
   numImmPhysRegisters: Int = 32,
+  numVcPhysRegisters: Int = 32,
   numIrfReadPorts: Int = 3,
   numFrfReadPorts: Int = 3,
+  numVrfReadPorts: Int = 3,
   numIrfBanks: Int = 1,
   numFrfBanks: Int = 1,
+  numVrfBanks: Int = 1,
   maxBrCount: Int = 4,
   numFetchBufferEntries: Int = 8,
   enableColumnALUIssue: Boolean = false,
@@ -217,6 +220,7 @@ trait HasBoomCoreParameters extends freechips.rocketchip.tile.HasCoreParameters
   val numIntPhysRegs= boomParams.numIntPhysRegisters // size of the integer physical register file
   val numFpPhysRegs = boomParams.numFpPhysRegisters  // size of the floating point physical register file
   val numImmPhysRegs = boomParams.numImmPhysRegisters
+  val numVpPhysRegs = boomParams.numVpPhysRegisters  // size of the vector physical register file
 
   val numIrfReadPorts = boomParams.numIrfReadPorts
   val numIrfBanks = boomParams.numIrfBanks
@@ -263,6 +267,7 @@ trait HasBoomCoreParameters extends freechips.rocketchip.tile.HasCoreParameters
   val aluWidth = aluIssueParam.issueWidth
   val memWidth = memIssueParam.issueWidth
   val fpWidth  = fpIssueParam.issueWidth
+  val vpWidth  = VpIssueParams.issueWidth
 
   val lsuWidth = boomParams.lsuWidth
 

@@ -40,6 +40,14 @@ trait HasVPUCtrlSigs {
 trait HasVPUParameters {
   // HasFPUParameters here:
   // https://github.com/chipsalliance/rocket-chip/blob/dbcb06afe1c76d1129cb6d264949322a34c37185/src/main/scala/tile/FPU.scala#L304
+  fLen: Int = 512
+}
+
+// ????
+object VPConstants
+{
+  val RM_SZ = 3
+  val FLAGS_SZ = 5
 }
 
 class VPUCtrlSigs extends Bundle with HasVPUCtrlSigs

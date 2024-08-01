@@ -695,4 +695,6 @@ class FPExeUnit(val hasFDiv: Boolean = false, val hasFpiu: Boolean = false)(impl
 class VPExeUnit()(implicit p: Parameters) extends ExecutionUnit("VPU")
 {
   val vpu = Module(new VPUUnit)
+
+  val io_vpu_resp = IO(Output(Valid(new ExeUnitResp(xLen+1))))
 }
