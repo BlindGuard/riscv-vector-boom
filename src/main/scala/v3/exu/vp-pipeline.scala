@@ -42,7 +42,6 @@ class VpPipeline(implicit p: Parameters) extends BoomModule with HasVPUParameter
     // dispatched micro ops?
     val dis_uops         = Vec(dispatchWidth, Flipped(Decoupled(new MicroOp)))
 
-    // +1 for recoding.
     // write ports?
     val ll_wports        = Flipped(Vec(lsuWidth, Valid(new ExeUnitResp(vLen))))       // from memory unit
     // ??? needed?

@@ -282,7 +282,9 @@ trait HasBoomCoreParameters extends freechips.rocketchip.tile.HasCoreParameters
   val lregSz          = log2Ceil(logicalRegCount)
   val ipregSz         = log2Ceil(numIntPhysRegs)
   val fpregSz         = log2Ceil(numFpPhysRegs)
-  val maxPregSz       = ipregSz max fpregSz
+  val vpregSz         = log2Ceil(numVecPhysRegs)
+  val tmpMaxSz        = vpregSz max fpregSz
+  val maxPregSz       = ipregSz max tmpMaxSz
   val ldqAddrSz       = log2Ceil(numLdqEntries)
   val stqAddrSz       = log2Ceil(numStqEntries)
   val lsuAddrSz       = ldqAddrSz max stqAddrSz

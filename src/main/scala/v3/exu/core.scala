@@ -103,14 +103,21 @@ class BoomCore()(implicit p: Parameters) extends BoomModule
   val numIntIssueWakeupPorts  = numIrfWritePorts + numFastWakeupPorts - numAlwaysBypassable // + memWidth for ll_wb
   val numIntRenameWakeupPorts = numIntIssueWakeupPorts
   val numFpWakeupPorts        = if (usingFPU) fp_pipeline.io.wakeups.length else 0
+  val numVecWakeupPorts       = if (usingVPU) vp_pipeline.io.wakeups.length else 0
 
   val decode_units     = for (w <- 0 until decodeWidth) yield { val d = Module(new DecodeUnit); d }
   val dec_brmask_logic = Module(new BranchMaskGenerationLogic(coreWidth))
   val rename_stage     = Module(new RenameStage(coreWidth, numIntPhysRegs, numIntRenameWakeupPorts, false))
   val fp_rename_stage  = if (usingFPU) Module(new RenameStage(coreWidth, numFpPhysRegs, numFpWakeupPorts, true)) else null
+  val vp_rename_stage  = if (usingVPU) Module(new RenameStage(coreWidth, numVecPhysRegs, numVecWakeupPorts, true)) else null
   val pred_rename_stage = Module(new PredRenameStage(coreWidth, ftqSz, 1))
-  val rename_stages    = if (usingFPU) Seq(rename_stage, fp_rename_stage, pred_rename_stage) else Seq(rename_stage, pred_rename_stage)
+  var rename_stages    = Seq(rename_stage, pred_rename_stage)
 
+  if (usingFPU) 
+    rename_stages += fp_rename_stage
+  if (usingVPU)
+    rename_stages += vp_rename_stage
+  
   val mem_iss_unit     = Module(new IssueUnitCollapsing(memIssueParam, numIntIssueWakeupPorts))
   mem_iss_unit.suggestName("mem_issue_unit")
   val int_iss_unit     = Module(new IssueUnitCollapsing(intIssueParam, numIntIssueWakeupPorts))
@@ -137,7 +144,8 @@ class BoomCore()(implicit p: Parameters) extends BoomModule
   // TODO: should this be a multi-arb?
   val ll_wbarb         = Module(new Arbiter(new ExeUnitResp(xLen), 1 +
                                                                    (if (usingFPU) 1 else 0) +
-                                                                   (if (usingRoCC) 1 else 0)))
+                                                                   (if (usingRoCC) 1 else 0) +
+                                                                   (if (usingVPU) 1 else 0)))
   val iregister_read   = Module(new RegisterRead(
                            issue_units.map(_.issueWidth).sum,
                            exe_units.withFilter(_.readsIrf).map(_.supportedFuncUnits).toSeq,
@@ -147,7 +155,7 @@ class BoomCore()(implicit p: Parameters) extends BoomModule
                            jmp_unit.numBypassStages,
                            xLen))
   val rob              = Module(new Rob(
-                           numIrfWritePorts + numFpWakeupPorts, // +memWidth for ll writebacks
+                           numIrfWritePorts + numFpWakeupPorts + numVecWakeupPorts, // +memWidth for ll writebacks
                            numFpWakeupPorts))
   // Used to wakeup registers in rename and issue. ROB needs to listen to something else.
   val int_iss_wakeups  = Wire(Vec(numIntIssueWakeupPorts, Valid(new ExeUnitResp(xLen))))
@@ -238,6 +246,10 @@ class BoomCore()(implicit p: Parameters) extends BoomModule
 
   if (usingFPU) {
     fp_pipeline.io.brupdate := brupdate
+  }
+
+  if(usingVPU) {
+    vp_pipeline.io.brupdate := brupdate
   }
 
   // Load/Store Unit & ExeUnits
@@ -902,6 +914,11 @@ class BoomCore()(implicit p: Parameters) extends BoomModule
        renport <> fpport
     }
   }
+  if(usingVPU) {
+    for ((renport, vecport) <- vp_rename_stage.io.wakeups zip vp_pipeline.io.wakeups) {
+       renport <> vecport
+    }
+  }
   if (enableSFBOpt) {
     pred_rename_stage.io.wakeups(0) := pred_wakeup
   } else {
@@ -1141,6 +1158,10 @@ class BoomCore()(implicit p: Parameters) extends BoomModule
     io.lsu.fp_stdata <> fp_pipeline.io.to_sdq
   }
 
+  if(usingVPU) {
+    io.lsu.vp_stdata <> vp_pipeline.io.to_sdq
+  }
+
   //-------------------------------------------------------------
   //-------------------------------------------------------------
   // **** Writeback Stage ****
@@ -1204,6 +1225,10 @@ class BoomCore()(implicit p: Parameters) extends BoomModule
     ll_wbarb.io.in(1)        <> fp_pipeline.io.to_int
     // Connect FLDs
     fp_pipeline.io.ll_wports <> exe_units.memory_units.map(_.io.ll_fresp).toSeq
+  }
+  if (usingVPU) {
+    // vector loads?
+    vp_pipeline.io.ll_wports <> exe_units.memory_units.map(_.io.ll_vresp).toSeq
   }
   if (usingRoCC) {
     require(usingFPU)
@@ -1277,6 +1302,15 @@ class BoomCore()(implicit p: Parameters) extends BoomModule
     }
   }
 
+  if (usingVPU) {
+    for ((wdata, wakeup) <- vp_pipeline.io.debug_wb_wdata zip vp_pipeline.io.wakeups) {
+      rob.io.wb_resps(cnt) <> wakeup
+      rob.io.debug_wb_valids(cnt) := wakeup.valid
+      rob.io.debug_wb_wdata(cnt) := wdata
+      cnt += 1
+    }
+  }
+
   require (cnt == rob.numWakeupPorts)
   require (f_cnt == rob.numFpuPorts)
 
@@ -1286,6 +1320,8 @@ class BoomCore()(implicit p: Parameters) extends BoomModule
   exe_units.map(u => u.io.status := csr.io.status)
   if (usingFPU)
     fp_pipeline.io.status := csr.io.status
+  if (usingVPU)
+    vp_pipeline.io.status := csr.io.status
 
   // Connect breakpoint info to memaddrcalcunit
   for (i <- 0 until memWidth) {
@@ -1310,6 +1346,10 @@ class BoomCore()(implicit p: Parameters) extends BoomModule
 
   if (usingFPU) {
     fp_pipeline.io.flush_pipeline := RegNext(rob.io.flush.valid)
+  }
+
+  if (usingVPU) {
+    vp_pipeline.io.flush_pipeline := RegNext(rob.io.flush.valid)
   }
 
   for (w <- 0 until exe_units.length) {
@@ -1337,6 +1377,9 @@ class BoomCore()(implicit p: Parameters) extends BoomModule
 
   if (usingFPU) {
     fp_pipeline.io.debug_tsc_reg := debug_tsc_reg
+  }
+  if (usingVPU) {
+    vp_pipeline.io.debug_tsc_reg := debug_tsc_reg
   }
 
   //-------------------------------------------------------------
