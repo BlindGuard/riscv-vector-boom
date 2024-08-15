@@ -1,10 +1,10 @@
-package boom.v4.exu
+package boom.v3.exu
 
 import chisel3._
 import chisel3.util._
 import chisel3.experimental.dataview._
 import org.chipsalliance.cde.config.Parameters
-import boom.v4.common._
+import boom.v3.common._
 
 /** Find out what these do:
   * 
@@ -39,14 +39,15 @@ trait HasVPUCtrlSigs {
 
 // what is dfmaLatency??
 case class VPUParams(
-  vecWidth: Int = 64,
-  dfmaLatency: Int = 4
+  vLen: Int = 512,
+  dfmaLatency: Int = 4,
+  vectorLanes: Int = 8
 )
 
 trait HasVPUParameters {
   // HasFPUParameters here:
   // https://github.com/chipsalliance/rocket-chip/blob/dbcb06afe1c76d1129cb6d264949322a34c37185/src/main/scala/tile/FPU.scala#L304
-  vecWidth: Int
+  vLen: Int
 }
 
 // ????

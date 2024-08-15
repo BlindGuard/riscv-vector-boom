@@ -60,6 +60,9 @@ class FFlagsResp(implicit p: Parameters) extends BoomBundle
  * @param writesIrf does this exe unit need a integer regfile port
  * @param readsFrf does this exe unit need a integer regfile port
  * @param writesFrf does this exe unit need a integer regfile port
+ * @param readsVrf
+ * @param writesVrf
+ * @param writesLlVrf
  * @param writesLlIrf does this exe unit need a integer regfile port
  * @param writesLlFrf does this exe unit need a integer regfile port
  * @param numBypassStages number of bypass ports for the exe unit
@@ -70,6 +73,7 @@ class FFlagsResp(implicit p: Parameters) extends BoomBundle
  * @param hasBrUnit does the exe unit have a branch unit
  * @param hasAlu does the exe unit have a alu
  * @param hasFpu does the exe unit have a fpu
+ * @param hasVpu does the exe unit have a vpu
  * @param hasMul does the exe unit have a multiplier
  * @param hasDiv does the exe unit have a divider
  * @param hasFdiv does the exe unit have a FP divider
@@ -81,6 +85,9 @@ abstract class ExecutionUnit(
   val writesIrf        : Boolean       = false,
   val readsFrf         : Boolean       = false,
   val writesFrf        : Boolean       = false,
+  val readsVrf         : Boolean       = false,
+  val writesVrf        : Boolean       = false,
+  val writesLlVrf      : Boolean       = false,
   val writesLlIrf      : Boolean       = false,
   val writesLlFrf      : Boolean       = false,
   val numBypassStages  : Int,
@@ -92,6 +99,7 @@ abstract class ExecutionUnit(
   val hasJmpUnit       : Boolean       = false,
   val hasAlu           : Boolean       = false,
   val hasFpu           : Boolean       = false,
+  val hasVpu           : Boolean       = false,
   val hasMul           : Boolean       = false,
   val hasDiv           : Boolean       = false,
   val hasFdiv          : Boolean       = false,
@@ -108,8 +116,10 @@ abstract class ExecutionUnit(
 
     val iresp    = if (writesIrf)   new DecoupledIO(new ExeUnitResp(dataWidth)) else null
     val fresp    = if (writesFrf)   new DecoupledIO(new ExeUnitResp(dataWidth)) else null
+    val vresp    = if (writesVrf)   new DecoupledIO(new ExeUnitResp(dataWidth)) else null
     val ll_iresp = if (writesLlIrf) new DecoupledIO(new ExeUnitResp(dataWidth)) else null
     val ll_fresp = if (writesLlFrf) new DecoupledIO(new ExeUnitResp(dataWidth)) else null
+    val ll_vresp = if (writesLlVrf) new DecoupledIO(new ExeUnitResp(dataWidth)) else null
 
 
     val bypass   = Output(Vec(numBypassStages, Valid(new ExeUnitResp(dataWidth))))
@@ -165,6 +175,19 @@ abstract class ExecutionUnit(
     io.ll_fresp.bits.fflags.valid := false.B
     io.ll_fresp.bits.predicated := false.B
   }
+  if (writesVrf) {
+    io.vresp.valid := false.B
+    io.vresp.bits := DontCare
+    io.vresp.bits.fflags.valid := false.B
+    io.vresp.bits.predicated := false.B
+    assert(io.vresp.ready)
+  }
+  if(writesLlVrf) {
+    io.ll_vresp.valid := false.B
+    io.ll_vresp.bits := DontCare
+    io.ll_vresp.fflags.valid := false.B
+    io.ll_vresp.bits.predicated := false.B
+  }
 
   // TODO add "number of fflag ports", so we can properly account for FPU+Mem combinations
   def hasFFlags     : Boolean = hasFpu || hasFdiv
@@ -183,6 +206,7 @@ abstract class ExecutionUnit(
       mem = hasMem,
       muld = hasMul || hasDiv,
       fpu = hasFpu,
+      vpu = hasVpu,
       csr = hasCSR,
       fdiv = hasFdiv,
       ifpu = hasIfpu)
@@ -571,7 +595,17 @@ class FPUExeUnit(
   override def toString: String = out_str.toString
 }
 
-class VPExeUnit()(implicit p: Parameters) extends ExecutionUnit("VPU")
+class VPExeUnit(
+  hasVPU : Boolean = true
+  )(implicit p: Parameters) 
+  extends ExecutionUnit(
+    readsVrf = true,
+    writesVrf = true,
+    writesLlVrf = true,
+    numBypassStages = 0,
+    dataWidth = vLen,
+    bypassable = false,
+    hasVpu = hasVpu)
 {
   // squash issue??
   // connected to: issue_unit.io.squash_grant

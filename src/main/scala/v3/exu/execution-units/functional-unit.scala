@@ -62,6 +62,7 @@ import FUConstants._
  * @param mem support mem unit?
  * @param muld support multiple div unit?
  * @param fpu support FP unit?
+ * @param vpu support VP unit?
  * @param csr support csr writing unit?
  * @param fdiv support FP div unit?
  * @param ifpu support int to FP unit?
@@ -72,6 +73,7 @@ class SupportedFuncUnits(
   val mem: Boolean  = false,
   val muld: Boolean = false,
   val fpu: Boolean  = false,
+  val vpu: Boolean = false,
   val csr: Boolean  = false,
   val fdiv: Boolean = false,
   val ifpu: Boolean = false)
