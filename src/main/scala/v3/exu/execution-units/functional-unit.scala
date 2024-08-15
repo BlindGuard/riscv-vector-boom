@@ -35,18 +35,19 @@ import boom.v3.util._
 object FUConstants
 {
   // bit mask, since a given execution pipeline may support multiple functional units
-  val FUC_SZ = 10
+  val FUC_SZ = 11
   val FU_X   = BitPat.dontCare(FUC_SZ)
-  val FU_ALU =   1.U(FUC_SZ.W)
-  val FU_JMP =   2.U(FUC_SZ.W)
-  val FU_MEM =   4.U(FUC_SZ.W)
-  val FU_MUL =   8.U(FUC_SZ.W)
-  val FU_DIV =  16.U(FUC_SZ.W)
-  val FU_CSR =  32.U(FUC_SZ.W)
-  val FU_FPU =  64.U(FUC_SZ.W)
-  val FU_FDV = 128.U(FUC_SZ.W)
-  val FU_I2F = 256.U(FUC_SZ.W)
-  val FU_F2I = 512.U(FUC_SZ.W)
+  val FU_ALU =    1.U(FUC_SZ.W)
+  val FU_JMP =    2.U(FUC_SZ.W)
+  val FU_MEM =    4.U(FUC_SZ.W)
+  val FU_MUL =    8.U(FUC_SZ.W)
+  val FU_DIV =   16.U(FUC_SZ.W)
+  val FU_CSR =   32.U(FUC_SZ.W)
+  val FU_FPU =   64.U(FUC_SZ.W)
+  val FU_FDV =  128.U(FUC_SZ.W)
+  val FU_I2F =  256.U(FUC_SZ.W)
+  val FU_F2I =  512.U(FUC_SZ.W)
+  val FU_VPU = 1024.U(FUC.SZ.W)
 
   // FP stores generate data through FP F2I, and generate address through MemAddrCalc
   val FU_F2IMEM = 516.U(FUC_SZ.W)
@@ -722,4 +723,39 @@ class PipelinedMulUnit(numStages: Int, dataWidth: Int)(implicit p: Parameters)
   imul.io.req.bits.tag := DontCare
   // response
   io.resp.bits.data    := imul.io.resp.bits.data
+}
+
+class VPUUnit(dataWidth: Int)(implicit p: Parameters)
+  extends FunctionalUnit(
+  //numBypassStages = 0,
+    dataWidth = dataWidth,
+    needsFcsr = true)
+{
+  io.req.ready := true.B
+  // what is dfmaLatency? 
+  // reuse the value from fp?
+  val numStages = p(tile.TileKey).core.fpu.get.dfmaLatency
+
+  // pipeline parameters that wrap around request??
+  val pipe = Module(new BranchKillablePipeline(new FuncUnitReq(dataWidth), numStages))
+  pipe.io.req := io.req
+  pipe.io.flush := io.kill
+  pipe.io.brupdate := io.brupdate
+
+  // vpu instance
+  // connect to request
+  val vpu = Module(new VPU())
+  vpu.io.req.valid         := io.req.valid
+  vpu.io.req.bits.uop      := io.req.bits.uop
+  vpu.io.req.bits.rs1_data := io.req.bits.rs1_data
+  vpu.io.req.bits.rs2_data := io.req.bits.rs2_data
+  vpu.io.req.bits.rs3_data := io.req.bits.rs3_data
+  vpu.io.req.bits.fcsr_rm  := io.fcsr_rm
+
+  // connect response
+  io.resp.valid        := pipe.io.resp(numStages-1).valid
+  io.resp.bits.uop     := pipe.io.resp(numStages-1).bits.uop
+  io.resp.bits.data    := vpu.io.resp.bits.data
+  io.resp.bits.fflags.valid := io.resp.valid
+  io.resp.bits.fflags.bits  := vpu.io.resp.bits.fflags.bits
 }

@@ -449,7 +449,26 @@ object RoCCDecode extends DecodeConstants
   )
 }
 
-
+/**
+ * Vector decode constants 
+ */
+object VDecode extends DecodeConstants
+{
+  val table: Array[(BitPat, List[BitPat])] = Array(
+            //                                                                  frs3_en                        wakeup_delay
+            //                                                                  |  imm sel                     |    bypassable (aka, known/fixed latency)
+            //                                                                  |  |     uses_ldq              |    |  is_br
+            //     is val inst?                                 rs1 regtype     |  |     |  uses_stq           |    |  |
+            //     |  is fp inst?                               |       rs2 type|  |     |  |  is_amo          |    |  |
+            //     |  |  is dst single-prec?                    |       |       |  |     |  |  |  is_fence     |    |  |
+            //     |  |  |  micro-opcode                        |       |       |  |     |  |  |  |  is_fencei |    |  |  is breakpoint or ecall
+            //     |  |  |  |           iq-type func    dst     |       |       |  |     |  |  |  |  |  mem    |    |  |  |  is unique? (clear pipeline for it)
+            //     |  |  |  |           |       unit    regtype |       |       |  |     |  |  |  |  |  cmd    |    |  |  |  |  flush on commit
+            //     |  |  |  |           |       |       |       |       |       |  |     |  |  |  |  |  |      |    |  |  |  |  |  csr cmd
+  FDIV_S    ->List(Y, N, X, uopVGATHER, IQT_VP, FU_VPU, RT_FIX, RT_FIX, RT_FIX, N, IS_X, Y, Y, N, N, N, M_X  , 0.U, N, N, N, N, N, CSR.N),
+  FDIV_S    ->List(Y, N, X, uopVZERO  , IQT_VP, FU_VPU, RT_FIX, RT_FIX, RT_FIX, N, IS_X, N, Y, N, N, N, M_X  , 0.U, N, N, N, N, N, CSR.N)
+  )
+}
 
 
 
@@ -483,6 +502,7 @@ class DecodeUnit(implicit p: Parameters) extends BoomModule
   if (usingFPU) decode_table ++= FDecode.table
   if (usingFPU && usingFDivSqrt) decode_table ++= FDivSqrtDecode.table
   if (usingRoCC) decode_table ++= RoCCDecode.table
+  if (usingVPU) decode_table ++= VDecode.table
   decode_table ++= (if (xLen == 64) X64Decode.table else X32Decode.table)
 
   val inst = uop.inst

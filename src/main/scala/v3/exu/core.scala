@@ -87,6 +87,12 @@ class BoomCore()(implicit p: Parameters) extends BoomModule
     fp_pipeline.io.wb_pdsts  := DontCare
   }
 
+  // Vector pipeline
+  var vp_pipeline: VpPipeline = null
+  if (usingVPU) vp_pipeline = Module(new VpPipeline)
+
+  // clear vector pipeline?
+
   val numIrfWritePorts        = exe_units.numIrfWritePorts + memWidth
   val numLlIrfWritePorts      = exe_units.numLlIrfWritePorts
   val numIrfReadPorts         = exe_units.numIrfReadPorts

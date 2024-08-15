@@ -31,11 +31,13 @@ case class BoomCoreParams(
   issueParams: Seq[IssueParams] = Seq(
     IssueParams(issueWidth=1, numEntries=16, iqType=IQT_MEM.litValue, dispatchWidth=1),
     IssueParams(issueWidth=2, numEntries=16, iqType=IQT_INT.litValue, dispatchWidth=1),
-    IssueParams(issueWidth=1, numEntries=16, iqType=IQT_FP.litValue , dispatchWidth=1)),
+    IssueParams(issueWidth=1, numEntries=16, iqType=IQT_FP.litValue , dispatchWidth=1),
+    IssueParams(issueWidth=1, numEntries=16, iqType=IQT_VP.litValue , dispatchWidth=1)),
   numLdqEntries: Int = 16,
   numStqEntries: Int = 16,
   numIntPhysRegisters: Int = 96,
   numFpPhysRegisters: Int = 64,
+  numVecPhysRegisters: Int = 32,
   maxBrCount: Int = 4,
   numFetchBufferEntries: Int = 16,
   enableAgePriorityIssue: Boolean = true,
@@ -72,7 +74,9 @@ case class BoomCoreParams(
   useFetchMonitor: Boolean = true,
   bootFreqHz: BigInt = 0,
   fpu: Option[FPUParams] = Some(FPUParams(sfmaLatency=4, dfmaLatency=4)),
+  vpu: Option[VPUParams] = Some(VPUParams(dfmaLatency=4, vectorLanes=8)),
   usingFPU: Boolean = true,
+  usingVPU: Boolean = true,
   haveBasicCounters: Boolean = true,
   misaWritable: Boolean = false,
   mtvecInit: Option[BigInt] = Some(BigInt(0)),
@@ -186,8 +190,9 @@ trait HasBoomCoreParameters extends freechips.rocketchip.tile.HasCoreParameters
   val ftqSz         = boomParams.ftq.nEntries        // number of FTQ entries
   val numFetchBufferEntries = boomParams.numFetchBufferEntries // number of instructions that stored between fetch&decode
 
-  val numIntPhysRegs= boomParams.numIntPhysRegisters // size of the integer physical register file
-  val numFpPhysRegs = boomParams.numFpPhysRegisters  // size of the floating point physical register file
+  val numIntPhysRegs= boomParams.numIntPhysRegisters  // size of the integer physical register file
+  val numFpPhysRegs = boomParams.numFpPhysRegisters   // size of the floating point physical register file
+  val numVecPhysRegs = boomParams.numVecPhysRegisters // size of the vector physical register file
 
   //************************************
   // Functional Units

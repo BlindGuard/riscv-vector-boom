@@ -27,7 +27,7 @@ trait IQType
   val IQT_INT = 1.U(IQT_SZ.W)
   val IQT_MEM = 2.U(IQT_SZ.W)
   val IQT_FP  = 4.U(IQT_SZ.W)
-
+  val IQT_VP  = 5.U(IQT_SZ.W)
   val IQT_MFP = 6.U(IQT_SZ.W)
 }
 
@@ -257,6 +257,9 @@ trait ScalarOpConstants
   val uopROCC      = 108.U(UOPC_SZ.W)
 
   val uopMOV       = 109.U(UOPC_SZ.W) // conditional mov decoded from "add rd, x0, rs2"
+
+  val uopVGATHER   = 110.U(UOPC_SZ.W)
+  val uopVZERO     = 111.U(UOPC_SZ.W)
 
   // The Bubble Instruction (Machine generated NOP)
   // Insert (XOR x0,x0,x0) which is different from software compiler
