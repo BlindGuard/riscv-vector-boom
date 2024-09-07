@@ -14,7 +14,7 @@
 // TODO:
 // * reduce port counts.
 
-package boom.v3.ifu
+package boomvec.ifu
 
 import chisel3._
 import chisel3.util._
@@ -22,9 +22,9 @@ import chisel3.util._
 import org.chipsalliance.cde.config.{Parameters}
 import freechips.rocketchip.util.{Str}
 
-import boom.v3.common._
-import boom.v3.exu._
-import boom.v3.util._
+import boomvec.common._
+import boomvec.exu._
+import boomvec.util._
 
 /**
  * FTQ Parameters used in configurations

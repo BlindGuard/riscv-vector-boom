@@ -1,4 +1,4 @@
-package boom.v3.ifu
+package boomvec.ifu
 
 import chisel3._
 import chisel3.util._
@@ -7,8 +7,8 @@ import org.chipsalliance.cde.config.{Field, Parameters}
 import freechips.rocketchip.diplomacy._
 import freechips.rocketchip.tilelink._
 
-import boom.v3.common._
-import boom.v3.util.{BoomCoreStringPrefix, WrapInc}
+import boomvec.common._
+import boomvec.util.{BoomCoreStringPrefix, WrapInc}
 
 case class BoomMicroBTBParams(
   nSets: Int = 256,

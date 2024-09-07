@@ -9,7 +9,7 @@
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 
-package boom.v3.exu
+package boomvec.exu
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -18,8 +18,8 @@ import chisel3.util._
 
 import org.chipsalliance.cde.config.Parameters
 
-import boom.v3.common._
-import boom.v3.util.{BoomCoreStringPrefix}
+import boomvec.common._
+import boomvec.util.{BoomCoreStringPrefix}
 
 /**
  * IO bundle for a register read port

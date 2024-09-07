@@ -9,7 +9,7 @@
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 
-package boom.v3.exu
+package boomvec.exu
 
 import chisel3._
 import chisel3.util._
@@ -18,7 +18,7 @@ import org.chipsalliance.cde.config.Parameters
 import freechips.rocketchip.util.Str
 
 import FUConstants._
-import boom.v3.common._
+import boomvec.common._
 
 /**
  * Specific type of issue unit

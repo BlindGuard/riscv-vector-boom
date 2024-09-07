@@ -27,7 +27,7 @@
 //   com - Commit
 //
 
-package boom.v3.exu
+package boomvec.exu
 
 import java.nio.file.{Paths}
 
@@ -41,10 +41,10 @@ import freechips.rocketchip.rocket.{Causes, PRV, TracedInstruction}
 import freechips.rocketchip.util.{Str, UIntIsOneOf, CoreMonitorBundle}
 import freechips.rocketchip.devices.tilelink.{PLICConsts, CLINTConsts}
 
-import boom.v3.common._
-import boom.v3.ifu.{GlobalHistory, HasBoomFrontendParameters}
-import boom.v3.exu.FUConstants._
-import boom.v3.util._
+import boomvec.common._
+import boomvec.ifu.{GlobalHistory, HasBoomFrontendParameters}
+import boomvec.exu.FUConstants._
+import boomvec.util._
 
 /**
  * Top level core object that connects the Frontend to the rest of the pipeline.
@@ -55,10 +55,10 @@ class BoomCore()(implicit p: Parameters) extends BoomModule
   val io = IO(new Bundle {
     val hartid = Input(UInt(hartIdLen.W))
     val interrupts = Input(new freechips.rocketchip.rocket.CoreInterrupts(false))
-    val ifu = new boom.v3.ifu.BoomFrontendIO
+    val ifu = new boomvec.ifu.BoomFrontendIO
     val ptw = Flipped(new freechips.rocketchip.rocket.DatapathPTWIO())
     val rocc = Flipped(new freechips.rocketchip.tile.RoCCCoreIO())
-    val lsu = Flipped(new boom.v3.lsu.LSUCoreIO)
+    val lsu = Flipped(new boomvec.lsu.LSUCoreIO)
     val ptw_tlb = new freechips.rocketchip.rocket.TLBPTWIO()
     val trace = Output(new TraceBundle)
     val fcsr_rm = UInt(freechips.rocketchip.tile.FPConstants.RM_SZ.W)
@@ -72,7 +72,7 @@ class BoomCore()(implicit p: Parameters) extends BoomModule
   // construct all of the modules
 
   // Only holds integer-registerfile execution units.
-  val exe_units = new boom.v3.exu.ExecutionUnits(fpu=false)
+  val exe_units = new boomvec.exu.ExecutionUnits(fpu=false)
   val jmp_unit_idx = exe_units.jmp_unit_idx
   val jmp_unit = exe_units(jmp_unit_idx)
 
@@ -1040,7 +1040,7 @@ class BoomCore()(implicit p: Parameters) extends BoomModule
   csr.io.exception := RegNext(rob.io.com_xcpt.valid)
   // csr.io.pc used for setting EPC during exception or CSR.io.trace.
 
-  csr.io.pc        := (boom.v3.util.AlignPCToBoundary(io.ifu.get_pc(0).com_pc, icBlockBytes)
+  csr.io.pc        := (boomvec.util.AlignPCToBoundary(io.ifu.get_pc(0).com_pc, icBlockBytes)
                      + RegNext(rob.io.com_xcpt.bits.pc_lob)
                      - Mux(RegNext(rob.io.com_xcpt.bits.edge_inst), 2.U, 0.U))
   // Cause not valid for for CALL or BREAKPOINTs (CSRFile will override it).

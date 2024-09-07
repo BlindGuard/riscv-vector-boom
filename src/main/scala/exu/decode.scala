@@ -3,7 +3,7 @@
 // All Rights Reserved. See LICENSE and LICENSE.SiFive for license details.
 //------------------------------------------------------------------------------
 
-package boom.v3.exu
+package boomvec.exu
 
 import chisel3._
 import chisel3.util._
@@ -17,8 +17,8 @@ import freechips.rocketchip.rocket.{CSR,Causes}
 import freechips.rocketchip.util.{uintToBitPat,UIntIsOneOf}
 
 import FUConstants._
-import boom.v3.common._
-import boom.v3.util._
+import boomvec.common._
+import boomvec.util._
 
 // scalastyle:off
 /**

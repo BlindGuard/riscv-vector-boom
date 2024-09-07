@@ -21,7 +21,7 @@
 //    - Exceptions are only taken when at the head of the commit bundle --
 //      this helps deal with loads, stores, and refetch instructions.
 
-package boom.v3.exu
+package boomvec.exu
 
 import scala.math.ceil
 
@@ -31,8 +31,8 @@ import chisel3.util._
 import org.chipsalliance.cde.config.Parameters
 import freechips.rocketchip.util._
 
-import boom.v3.common._
-import boom.v3.util._
+import boomvec.common._
+import boomvec.util._
 
 /**
  * IO bundle to interact with the ROB

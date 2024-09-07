@@ -3,7 +3,7 @@
 // All Rights Reserved. See LICENSE and LICENSE.SiFive for license details.
 //------------------------------------------------------------------------------
 
-package boom.v3.common
+package boomvec.common
 
 import chisel3._
 import chisel3.util.{RRArbiter, Queue}
@@ -22,10 +22,10 @@ import freechips.rocketchip.interrupts._
 import freechips.rocketchip.util._
 import freechips.rocketchip.tile._
 
-import boom.v3.exu._
-import boom.v3.ifu._
-import boom.v3.lsu._
-import boom.v3.util.{BoomCoreStringPrefix}
+import boomvec.exu._
+import boomvec.ifu._
+import boomvec.lsu._
+import boomvec.util.{BoomCoreStringPrefix}
 import freechips.rocketchip.prci.ClockSinkParameters
 
 

@@ -6,10 +6,10 @@
 package boom.v3
 
 package object common extends
-  boom.v3.common.constants.ScalarOpConstants with
-  boom.v3.common.constants.ExcCauseConstants with
-  boom.v3.common.constants.RISCVConstants with
-  boom.v3.common.constants.IQType
+  boomvec.common.constants.ScalarOpConstants with
+  boomvec.common.constants.ExcCauseConstants with
+  boomvec.common.constants.RISCVConstants with
+  boomvec.common.constants.IQType
 {
 }
 

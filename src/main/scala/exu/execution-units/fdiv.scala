@@ -9,7 +9,7 @@
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 
-package boom.v3.exu
+package boomvec.exu
 
 import chisel3._
 import chisel3.util._
@@ -17,8 +17,8 @@ import chisel3.experimental.dataview._
 import org.chipsalliance.cde.config.Parameters
 import freechips.rocketchip.tile.FPConstants._
 import freechips.rocketchip.tile
-import boom.v3.common._
-import boom.v3.util._
+import boomvec.common._
+import boomvec.util._
 import freechips.rocketchip.tile.HasFPUParameters
 import freechips.rocketchip.util.uintToBitPat
 

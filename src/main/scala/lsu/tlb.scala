@@ -1,4 +1,4 @@
-package boom.v3.lsu
+package boomvec.lsu
 
 import chisel3._
 import chisel3.util._
@@ -10,9 +10,9 @@ import freechips.rocketchip.subsystem.{CacheBlockBytes}
 import freechips.rocketchip.diplomacy.{RegionType}
 import freechips.rocketchip.util._
 
-import boom.v3.common._
-import boom.v3.exu.{BrResolutionInfo, Exception, FuncUnitResp, CommitSignals}
-import boom.v3.util.{BoolToChar, AgePriorityEncoder, IsKilledByBranch, GetNewBrMask, WrapInc, IsOlder, UpdateBrMask}
+import boomvec.common._
+import boomvec.exu.{BrResolutionInfo, Exception, FuncUnitResp, CommitSignals}
+import boomvec.util.{BoolToChar, AgePriorityEncoder, IsKilledByBranch, GetNewBrMask, WrapInc, IsOlder, UpdateBrMask}
 
 class NBDTLB(instruction: Boolean, lgMaxSize: Int, cfg: TLBConfig)(implicit edge: TLEdgeOut, p: Parameters) extends BoomModule()(p) {
   require(!instruction)
