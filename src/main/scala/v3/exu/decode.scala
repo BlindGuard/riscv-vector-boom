@@ -465,8 +465,10 @@ object VDecode extends DecodeConstants
             //     |  |  |  |           iq-type func    dst     |       |       |  |     |  |  |  |  |  mem    |    |  |  |  is unique? (clear pipeline for it)
             //     |  |  |  |           |       unit    regtype |       |       |  |     |  |  |  |  |  cmd    |    |  |  |  |  flush on commit
             //     |  |  |  |           |       |       |       |       |       |  |     |  |  |  |  |  |      |    |  |  |  |  |  csr cmd
-  FDIV_S    ->List(Y, N, X, uopVGATHER, IQT_VP, FU_VPU, RT_FIX, RT_FIX, RT_FIX, N, IS_X, Y, Y, N, N, N, M_X  , 0.U, N, N, N, N, N, CSR.N),
-  FDIV_S    ->List(Y, N, X, uopVZERO  , IQT_VP, FU_VPU, RT_FIX, RT_FIX, RT_FIX, N, IS_X, N, Y, N, N, N, M_X  , 0.U, N, N, N, N, N, CSR.N)
+  VLD       ->List(Y, N, X, uopLD     , IQT_VP, FU_MEM, RT_VEC, RT_VEC, RT_VEC, N, IS_X, Y, N, N, N, N, M_X  , 0.U, N, N, N, N, N, CSR.N),
+  VSD       ->List(Y, N, X, uopSD     , IQT_VP, FU_MEM, RT_VEC, RT_VEC, RT_VEC, N, IS_X, N, Y, N, N, N, M_X  , 0.U, N, N, N, N, N, CSR.N),
+  VGATHER   ->List(Y, N, X, uopVGATHER, IQT_VP, FU_VPU, RT_VEC, RT_VEC, RT_VEC, N, IS_X, N, N, N, N, N, M_X  , 0.U, N, N, N, N, N, CSR.N),
+  VZERO     ->List(Y, N, X, uopVZERO  , IQT_VP, FU_VPU, RT_VEC, RT_VEC, RT_VEC, N, IS_X, N, N, N, N, N, M_X  , 0.U, N, N, N, N, N, CSR.N)
   )
 }
 

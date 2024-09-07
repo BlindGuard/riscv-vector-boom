@@ -60,6 +60,7 @@ class LSUExeIO(implicit p: Parameters) extends BoomBundle()(p)
   // Send load data to regfiles
   val iresp    = new DecoupledIO(new boom.v3.exu.ExeUnitResp(xLen))
   val fresp    = new DecoupledIO(new boom.v3.exu.ExeUnitResp(xLen+1)) // TODO: Should this be fLen?
+  val vresp    = new DecoupledIO(new boom.v3.exu.ExeUnitResp(vLen))
 }
 
 class BoomDCacheReq(implicit p: Parameters) extends BoomBundle()(p)
@@ -118,6 +119,8 @@ class LSUCoreIO(implicit p: Parameters) extends BoomBundle()(p)
   val stq_full    = Output(Vec(coreWidth, Bool()))
 
   val fp_stdata   = Flipped(Decoupled(new ExeUnitResp(fLen)))
+
+  val vp_stdata   = Flipped(Decoupled(new ExeUnitResp(vLen)))
 
   val commit      = Input(new CommitSignals)
   val commit_load_at_rob_head = Input(Bool())
@@ -1277,6 +1280,8 @@ class LSU(implicit p: Parameters, edge: TLEdgeOut) extends BoomModule()(p)
     io.core.exe(w).iresp.bits  := DontCare
     io.core.exe(w).fresp.valid := false.B
     io.core.exe(w).fresp.bits  := DontCare
+    io.core.exe(w).vresp.valid := false.B
+    io.core.exe(w).vresp.bits  := DontCare
   }
 
   val dmem_resp_fired = WireInit(widthMap(w => false.B))
@@ -1313,6 +1318,7 @@ class LSU(implicit p: Parameters, edge: TLEdgeOut) extends BoomModule()(p)
         val ldq_idx = io.dmem.resp(w).bits.uop.ldq_idx
         val send_iresp = ldq(ldq_idx).bits.uop.dst_rtype === RT_FIX
         val send_fresp = ldq(ldq_idx).bits.uop.dst_rtype === RT_FLT
+        val send_vresp = ldq(ldq_idx).bits.uop.dst_rtype === RT_VEC
 
         io.core.exe(w).iresp.bits.uop  := ldq(ldq_idx).bits.uop
         io.core.exe(w).fresp.bits.uop  := ldq(ldq_idx).bits.uop
@@ -1320,6 +1326,8 @@ class LSU(implicit p: Parameters, edge: TLEdgeOut) extends BoomModule()(p)
         io.core.exe(w).iresp.bits.data := io.dmem.resp(w).bits.data
         io.core.exe(w).fresp.valid     := send_fresp
         io.core.exe(w).fresp.bits.data := io.dmem.resp(w).bits.data
+
+        // add vector stuff
 
         assert(send_iresp ^ send_fresp)
         dmem_resp_fired(w) := true.B

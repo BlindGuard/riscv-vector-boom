@@ -118,9 +118,9 @@ class MicroOp(implicit p: Parameters) extends BoomBundle
   val lrs3             = UInt(lregSz.W)
 
   val ldst_val         = Bool()              // is there a destination? invalid for stores, rd==x0, etc.
-  val dst_rtype        = UInt(2.W)
-  val lrs1_rtype       = UInt(2.W)
-  val lrs2_rtype       = UInt(2.W)
+  val dst_rtype        = UInt(3.W)
+  val lrs1_rtype       = UInt(3.W)
+  val lrs2_rtype       = UInt(3.W)
   val frs3_en          = Bool()
 
   // floating point information

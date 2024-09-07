@@ -426,6 +426,9 @@ class ALUExeUnit(
     if (usingFPU) {
       io.ll_fresp <> io.lsu_io.fresp
     }
+    if (usingVPU) {
+      io.ll_vresp <> io.lsu_io.vresp
+    }
   }
 
   // Outputs (Write Port #0)  ---------------
