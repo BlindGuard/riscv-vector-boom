@@ -106,7 +106,7 @@ class VpuReq()(implicit p: Parameters) extends BoomBundle
   val rs2_data = Bits(512.W)
 }
 
-class FPInput(implicit p: Parameters) extends CoreBundle()(p) with HasFPUCtrlSigs {
+class VecInput(implicit p: Parameters) extends CoreBundle()(p) with HasVPUCtrlSigs {
   val rm = Bits(FPConstants.RM_SZ.W)
   val fmaCmd = Bits(2.W)
   val typ = Bits(2.W)

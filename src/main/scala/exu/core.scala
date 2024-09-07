@@ -25,6 +25,7 @@
 //   sxt - Sign-extend
 //   wb  - Writeback
 //   com - Commit
+//
 
 package boom.v3.exu
 
