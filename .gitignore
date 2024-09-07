@@ -11,3 +11,4 @@ lib
 .vscode/
 *.code-workspace
 .idea/
+.out/
