@@ -3,7 +3,7 @@
 // All Rights Reserved. See LICENSE and LICENSE.SiFive for license details.
 //------------------------------------------------------------------------------
 
-package boom.v3
+package boomvec
 
 package object common extends
   boomvec.common.constants.ScalarOpConstants with

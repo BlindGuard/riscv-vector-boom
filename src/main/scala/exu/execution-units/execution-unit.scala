@@ -599,7 +599,7 @@ class FPUExeUnit(
 }
 
 class VPExeUnit(
-  hasVPU : Boolean = true
+  hasVpu : Boolean = true
   )(implicit p: Parameters) 
   extends ExecutionUnit(
     readsVrf = true,

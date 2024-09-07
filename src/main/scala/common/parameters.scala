@@ -76,7 +76,6 @@ case class BoomCoreParams(
   fpu: Option[FPUParams] = Some(FPUParams(sfmaLatency=4, dfmaLatency=4)),
   vpu: Option[VPUParams] = Some(VPUParams(dfmaLatency=4, vectorLanes=8)),
   usingFPU: Boolean = true,
-  usingVPU: Boolean = true,
   haveBasicCounters: Boolean = true,
   misaWritable: Boolean = false,
   mtvecInit: Option[BigInt] = Some(BigInt(0)),
@@ -113,6 +112,7 @@ case class BoomCoreParams(
 {
   override def traceCustom = Some(new BoomTraceBundle)
   val xLen = 64
+  val vLen = 512
   val haveFSDirty = true
   val pmpGranularity: Int = 4
   val instBits: Int = 16
@@ -175,6 +175,8 @@ trait HasBoomCoreParameters extends freechips.rocketchip.tile.HasCoreParameters
 
   // coreWidth is width of decode, width of integer rename, width of ROB, and commit width
   val coreWidth = decodeWidth
+
+  val usingVPU = true
 
   require (isPow2(fetchWidth))
   require (coreWidth <= fetchWidth)

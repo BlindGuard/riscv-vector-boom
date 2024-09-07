@@ -9,6 +9,10 @@ package boomvec.exu
 import chisel3._
 import chisel3.util._
 
+import org.chipsalliance.cde.config.{Parameters}
+import freechips.rocketchip.rocket
+import freechips.rocketchip.tile
+
 import boomvec.common._
 import boomvec.util._
 
@@ -25,7 +29,7 @@ class VpPipeline(implicit p: Parameters) extends BoomModule with HasVPUParameter
   val VpIssueParams = issueParams.find(_.iqType == IQT_VP.litValue).get
   val vpWidth = VpIssueParams.issueWidth                      // 1
   val dispatchWidth = VpIssueParams.dispatchWidth             // 1 
-  val numLlPorts = lsuWidth                                   // 1 
+  val numLlPorts = 1                                   // 1 
   val numWakeupPorts = VpIssueParams.issueWidth + numLlPorts  // 1 + 1 = 2
   // address size vector register?
   val vpPregSz = log2Ceil(numVecPhysRegs)                     // log2(32) = 5
@@ -43,7 +47,7 @@ class VpPipeline(implicit p: Parameters) extends BoomModule with HasVPUParameter
     val dis_uops         = Vec(dispatchWidth, Flipped(Decoupled(new MicroOp)))
 
     // write ports?
-    val ll_wports        = Flipped(Vec(lsuWidth, Valid(new ExeUnitResp(vLen))))       // from memory unit
+    val ll_wports        = Flipped(Vec(1, Valid(new ExeUnitResp(vLen))))       // from memory unit
     // ??? needed?
     //val from_int         = Flipped(Decoupled(new ExeUnitResp(vecWidth+1)))          // from integer RF
     // memory access?

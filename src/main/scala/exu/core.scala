@@ -115,9 +115,9 @@ class BoomCore()(implicit p: Parameters) extends BoomModule
   var rename_stages    = Seq(rename_stage, pred_rename_stage)
 
   if (usingFPU) 
-    rename_stages += fp_rename_stage
+    rename_stages = rename_stages :+ fp_rename_stage
   if (usingVPU)
-    rename_stages += vp_rename_stage
+    rename_stages = rename_stages :+ vp_rename_stage
   
   val mem_iss_unit     = Module(new IssueUnitCollapsing(memIssueParam, numIntIssueWakeupPorts))
   mem_iss_unit.suggestName("mem_issue_unit")

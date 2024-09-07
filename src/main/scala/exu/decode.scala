@@ -455,20 +455,20 @@ object RoCCDecode extends DecodeConstants
 object VDecode extends DecodeConstants
 {
   val table: Array[(BitPat, List[BitPat])] = Array(
-            //                                                                  frs3_en                        wakeup_delay
-            //                                                                  |  imm sel                     |    bypassable (aka, known/fixed latency)
-            //                                                                  |  |     uses_ldq              |    |  is_br
-            //     is val inst?                                 rs1 regtype     |  |     |  uses_stq           |    |  |
-            //     |  is fp inst?                               |       rs2 type|  |     |  |  is_amo          |    |  |
-            //     |  |  is dst single-prec?                    |       |       |  |     |  |  |  is_fence     |    |  |
-            //     |  |  |  micro-opcode                        |       |       |  |     |  |  |  |  is_fencei |    |  |  is breakpoint or ecall
-            //     |  |  |  |           iq-type func    dst     |       |       |  |     |  |  |  |  |  mem    |    |  |  |  is unique? (clear pipeline for it)
-            //     |  |  |  |           |       unit    regtype |       |       |  |     |  |  |  |  |  cmd    |    |  |  |  |  flush on commit
-            //     |  |  |  |           |       |       |       |       |       |  |     |  |  |  |  |  |      |    |  |  |  |  |  csr cmd
-  VLD       ->List(Y, N, X, uopLD     , IQT_VP, FU_MEM, RT_VEC, RT_VEC, RT_VEC, N, IS_X, Y, N, N, N, N, M_X  , 0.U, N, N, N, N, N, CSR.N),
-  VSD       ->List(Y, N, X, uopSD     , IQT_VP, FU_MEM, RT_VEC, RT_VEC, RT_VEC, N, IS_X, N, Y, N, N, N, M_X  , 0.U, N, N, N, N, N, CSR.N),
-  VGATHER   ->List(Y, N, X, uopVGATHER, IQT_VP, FU_VPU, RT_VEC, RT_VEC, RT_VEC, N, IS_X, N, N, N, N, N, M_X  , 0.U, N, N, N, N, N, CSR.N),
-  VZERO     ->List(Y, N, X, uopVZERO  , IQT_VP, FU_VPU, RT_VEC, RT_VEC, RT_VEC, N, IS_X, N, N, N, N, N, M_X  , 0.U, N, N, N, N, N, CSR.N)
+              //                                                                  frs3_en                        wakeup_delay
+              //                                                                  |  imm sel                     |    bypassable (aka, known/fixed latency)
+              //                                                                  |  |     uses_ldq              |    |  is_br
+              //     is val inst?                                 rs1 regtype     |  |     |  uses_stq           |    |  |
+              //     |  is fp inst?                               |       rs2 type|  |     |  |  is_amo          |    |  |
+              //     |  |  is dst single-prec?                    |       |       |  |     |  |  |  is_fence     |    |  |
+              //     |  |  |  micro-opcode                        |       |       |  |     |  |  |  |  is_fencei |    |  |  is breakpoint or ecall
+              //     |  |  |  |           iq-type func    dst     |       |       |  |     |  |  |  |  |  mem    |    |  |  |  is unique? (clear pipeline for it)
+              //     |  |  |  |           |       unit    regtype |       |       |  |     |  |  |  |  |  cmd    |    |  |  |  |  flush on commit
+              //     |  |  |  |           |       |       |       |       |       |  |     |  |  |  |  |  |      |    |  |  |  |  |  csr cmd
+  VL1RE32_V   ->List(Y, N, X, uopLD     , IQT_VP, FU_MEM, RT_VEC, RT_VEC, RT_VEC, N, IS_X, Y, N, N, N, N, M_X  , 0.U, N, N, N, N, N, CSR.N),
+  VSE512_V    ->List(Y, N, X, uopSD     , IQT_VP, FU_MEM, RT_VEC, RT_VEC, RT_VEC, N, IS_X, N, Y, N, N, N, M_X  , 0.U, N, N, N, N, N, CSR.N),
+  VSE32_V     ->List(Y, N, X, uopSD     , IQT_VP, FU_MEM, RT_VEC, RT_VEC, RT_VEC, N, IS_X, N, Y, N, N, N, M_X  , 0.U, N, N, N, N, N, CSR.N),
+  VRGATHER_VV ->List(Y, N, X, uopVGATHER, IQT_VP, FU_VPU, RT_VEC, RT_VEC, RT_VEC, N, IS_X, N, N, N, N, N, M_X  , 0.U, N, N, N, N, N, CSR.N),
   )
 }
 
