@@ -74,7 +74,6 @@ case class BoomCoreParams(
   useFetchMonitor: Boolean = true,
   bootFreqHz: BigInt = 0,
   fpu: Option[FPUParams] = Some(FPUParams(sfmaLatency=4, dfmaLatency=4)),
-  vpu: Option[VPUParams] = Some(VPUParams(dfmaLatency=4, vectorLanes=8)),
   usingFPU: Boolean = true,
   haveBasicCounters: Boolean = true,
   misaWritable: Boolean = false,
@@ -177,6 +176,7 @@ trait HasBoomCoreParameters extends freechips.rocketchip.tile.HasCoreParameters
   val coreWidth = decodeWidth
 
   val usingVPU = true
+  val vpu: Option[VPUParams] = Some(VPUParams(dfmaLatency=4, vectorLanes=8))
 
   require (isPow2(fetchWidth))
   require (coreWidth <= fetchWidth)

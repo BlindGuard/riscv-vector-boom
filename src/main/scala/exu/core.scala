@@ -290,7 +290,6 @@ class BoomCore()(implicit p: Parameters) extends BoomModule
   val csr = Module(new freechips.rocketchip.rocket.CSRFile(perfEvents, boomParams.customCSRs.decls))
   csr.io.inst foreach { c => c := DontCare }
   csr.io.rocc_interrupt := io.rocc.interrupt
-  csr.io.mhtinst_read_pseudo := false.B
 
   val custom_csrs = Wire(new BoomCustomCSRs)
   custom_csrs.csrs.foreach { c => c.stall := false.B; c.set := false.B; c.sdata := DontCare }
@@ -1229,7 +1228,7 @@ class BoomCore()(implicit p: Parameters) extends BoomModule
   }
   if (usingVPU) {
     // vector loads?
-    vp_pipeline.io.ll_wports <> exe_units.memory_units.map(_.io.ll_vresp).toSeq
+    vp_pipeline.io.ll_wports <> exe_units.memory_units.head.io.ll_vresp
   }
   if (usingRoCC) {
     require(usingFPU)

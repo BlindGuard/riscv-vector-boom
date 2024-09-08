@@ -466,8 +466,8 @@ object VDecode extends DecodeConstants
               //     |  |  |  |           |       unit    regtype |       |       |  |     |  |  |  |  |  cmd    |    |  |  |  |  flush on commit
               //     |  |  |  |           |       |       |       |       |       |  |     |  |  |  |  |  |      |    |  |  |  |  |  csr cmd
   VL1RE32_V   ->List(Y, N, X, uopLD     , IQT_VP, FU_MEM, RT_VEC, RT_VEC, RT_VEC, N, IS_X, Y, N, N, N, N, M_X  , 0.U, N, N, N, N, N, CSR.N),
-  VSE512_V    ->List(Y, N, X, uopSD     , IQT_VP, FU_MEM, RT_VEC, RT_VEC, RT_VEC, N, IS_X, N, Y, N, N, N, M_X  , 0.U, N, N, N, N, N, CSR.N),
-  VSE32_V     ->List(Y, N, X, uopSD     , IQT_VP, FU_MEM, RT_VEC, RT_VEC, RT_VEC, N, IS_X, N, Y, N, N, N, M_X  , 0.U, N, N, N, N, N, CSR.N),
+  VSE512_V    ->List(Y, N, X, uopSTA    , IQT_VP, FU_MEM, RT_VEC, RT_VEC, RT_VEC, N, IS_X, N, Y, N, N, N, M_X  , 0.U, N, N, N, N, N, CSR.N),
+  VSE32_V     ->List(Y, N, X, uopSTA    , IQT_VP, FU_MEM, RT_VEC, RT_VEC, RT_VEC, N, IS_X, N, Y, N, N, N, M_X  , 0.U, N, N, N, N, N, CSR.N),
   VRGATHER_VV ->List(Y, N, X, uopVGATHER, IQT_VP, FU_VPU, RT_VEC, RT_VEC, RT_VEC, N, IS_X, N, N, N, N, N, M_X  , 0.U, N, N, N, N, N, CSR.N),
   )
 }

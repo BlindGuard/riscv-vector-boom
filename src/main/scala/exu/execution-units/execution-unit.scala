@@ -185,7 +185,7 @@ abstract class ExecutionUnit(
   if(writesLlVrf) {
     io.ll_vresp.valid := false.B
     io.ll_vresp.bits := DontCare
-    io.ll_vresp.fflags.valid := false.B
+    io.ll_vresp.bits.fflags.valid := false.B
     io.ll_vresp.bits.predicated := false.B
   }
 
@@ -606,74 +606,79 @@ class VPExeUnit(
     writesVrf = true,
     writesLlVrf = true,
     numBypassStages = 0,
-    dataWidth = vLen,
+    dataWidth = 512,
     bypassable = false,
     hasVpu = hasVpu)
 {
   // squash issue??
   // connected to: issue_unit.io.squash_grant
-  val io_squash_iss = IO(Output(Bool()))
-  io_squash_iss := (
-    (io_arb_frf_reqs(0).valid && !io_arb_frf_reqs(0).ready) ||
-    (io_arb_frf_reqs(1).valid && !io_arb_frf_reqs(1).ready) ||
-    (io_arb_frf_reqs(2).valid && !io_arb_frf_reqs(2).ready)
-  )
+  // val io_squash_iss = IO(Output(Bool()))
+  // io_squash_iss := (
+  //   (io_arb_frf_reqs(0).valid && !io_arb_frf_reqs(0).ready) ||
+  //   (io_arb_frf_reqs(1).valid && !io_arb_frf_reqs(1).ready) ||
+  //   (io_arb_frf_reqs(2).valid && !io_arb_frf_reqs(2).ready)
+  // )
 
-  when (io_squash_iss) {
-    val will_replay = arb_uop.valid && !IsKilledByBranch(io_brupdate, io_kill, arb_uop.bits)
-    arb_uop.valid := will_replay
-    arb_uop.bits  := UpdateBrMask(io_brupdate, arb_uop.bits)
-    arb_uop.bits.iw_p1_bypass_hint := false.B
-    arb_uop.bits.iw_p2_bypass_hint := false.B
-    arb_uop.bits.iw_p3_bypass_hint := false.B
-    rrd_uop.valid := false.B
-  }
-  // ---
-
-  // request for functional unit
-  val exe_vec_req = Wire(new FuncUnitReq(xLen+1))
-  exe_vec_req.uop := exe_uop.bits
-  exe_vec_req.rs1_data := exe_rs1_data
-  exe_vec_req.rs2_data := exe_rs2_data
-  exe_vec_req.rs3_data := exe_rs3_data
-  exe_vec_req.pred_data := DontCare
-  exe_vec_req.imm_data := DontCare
-  exe_vec_req.ftq_info := DontCare
+  // when (io_squash_iss) {
+  //   val will_replay = arb_uop.valid && !IsKilledByBranch(io_brupdate, io_kill, arb_uop.bits)
+  //   arb_uop.valid := will_replay
+  //   arb_uop.bits  := UpdateBrMask(io_brupdate, arb_uop.bits)
+  //   arb_uop.bits.iw_p1_bypass_hint := false.B
+  //   arb_uop.bits.iw_p2_bypass_hint := false.B
+  //   arb_uop.bits.iw_p3_bypass_hint := false.B
+  //   rrd_uop.valid := false.B
+  // }
   // ---
 
   // vector processing unit instance
-  val vpu = Module(new VPUUnit)
-  fu_types += ((FC_VPU, true.B, "VPU"))
-  vpu.io.req.valid := exe_uop.valid && (
-    exe_uop.bits.fu_code(FC_VPU))
-  vpu.io.req.bits := exe_vec_req
-  vpu.io.fcsr_rm  := io_fcsr_rm
-  vpu.io.brupdate := io_brupdate
-  vpu.io.kill     := io_kill
-  vpu.io.resp.ready := true.B
+  var vpu: VPUUnit = null
+  val vpu_resp_valid = WireInit(false.B)
+  val vpu_resp_fflags = Wire(new ValidIO(new FFlagsResp()))
+
+  vpu = Module(new VPUUnit(dataWidth))
+  //fu_types += ((FC_VPU, true.B, "VPU"))
+
+  // connect FuncUnitReq to functional unit input
+  vpu.io.req.valid          := io.req.valid && (
+                               io.req.bits.fu_code_is(FC_VPU))
+  vpu.io.req.bits.uop       := io.req.bits.uop
+  vpu.io.req.bits.rs1_data  := io.req.bits.rs1_data
+  vpu.io.req.bits.rs2_data  := io.req.bits.rs2_data
+  vpu.io.req.bits.pred_data := false.B
+  vpu.io.req.bits.kill      := io.req.bits.kill
+
+  // control signals
+  
+  vpu.io.fcsr_rm    := io.fcsr_rm
+  vpu.io.brupdate   := io.brupdate
+  vpu.io.resp.ready := DontCare
+
+  // functional unit response
+  vpu_resp_valid      := vpu.io.resp.valid
+  vpu_resp_fflags     := vpu.io.resp.bits.fflags
   // ---
 
   // wakeup stuff
-  val io_wakeup = IO(Output(Valid(new Wakeup)))
-  val fastWakeupLatency = dfmaLatency - 3 // Three stages WAKE-ISS-ARB
-  require (fastWakeupLatency >= 0)
-  val fast_wakeups = Wire(Vec(fastWakeupLatency + 1, Valid(new Wakeup)))
-  fast_wakeups(0).valid    := exe_uop.valid && exe_uop.bits.fu_code(FC_VPU)
-  fast_wakeups(0).bits.uop := exe_uop.bits
-  fast_wakeups(0).bits.speculative_mask := 0.U
-  fast_wakeups(0).bits.rebusy           := false.B
-  fast_wakeups(0).bits.bypassable       := true.B
-  for (i <- 0 until fastWakeupLatency) {
-    fast_wakeups(i+1) := RegNext(UpdateBrMask(io_brupdate, io_kill, fast_wakeups(i)))
-  }
-  io_wakeup := fast_wakeups(fastWakeupLatency)
+  // val io_wakeup = IO(Output(Valid(new Wakeup)))
+  // val fastWakeupLatency = dfmaLatency - 3 // Three stages WAKE-ISS-ARB
+  // require (fastWakeupLatency >= 0)
+  // val fast_wakeups = Wire(Vec(fastWakeupLatency + 1, Valid(new Wakeup)))
+  // fast_wakeups(0).valid    := io.req.valid && io.req.bits.fu_code(FC_VPU)
+  // fast_wakeups(0).bits.uop := io.req.bits.uop
+  // fast_wakeups(0).bits.speculative_mask := 0.U
+  // fast_wakeups(0).bits.rebusy           := false.B
+  // fast_wakeups(0).bits.bypassable       := true.B
+  // for (i <- 0 until fastWakeupLatency) {
+  //   fast_wakeups(i+1) := RegNext(UpdateBrMask(io_brupdate, io_kill, fast_wakeups(i)))
+  // }
+  // io_wakeup := fast_wakeups(fastWakeupLatency)
   // ---
 
   // response from the vpu execution unit
   val io_vpu_resp = IO(Output(Valid(new ExeUnitResp(xLen+1))))
-  io_vpu_resp.valid := vpu.io.resp.valid && !vpu.io.resp.bits.uop.fu_code(FC_F2I)
+  io_vpu_resp.valid := vpu.io.resp.valid && !vpu.io.resp.bits.uop.fu_code_is(FC_VPU)
   io_vpu_resp.bits  := vpu.io.resp.bits
   // ---
 
-  io_ready_fu_types := get_ready_fu_types
+  //io_ready_fu_types := get_ready_fu_types
 }
