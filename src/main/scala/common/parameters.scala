@@ -111,7 +111,7 @@ case class BoomCoreParams(
 {
   override def traceCustom = Some(new BoomTraceBundle)
   val xLen = 64
-  val vLen = 512
+  override val vLen = 512
   val haveFSDirty = true
   val pmpGranularity: Int = 4
   val instBits: Int = 16
@@ -176,7 +176,7 @@ trait HasBoomCoreParameters extends freechips.rocketchip.tile.HasCoreParameters
   val coreWidth = decodeWidth
 
   val usingVPU = true
-  val vpu: Option[VPUParams] = Some(VPUParams(dfmaLatency=4, vectorLanes=8))
+  //val vpu: Option[VPUParams] = Some(VPUParams(dfmaLatency=4, vectorLanes=8))
 
   require (isPow2(fetchWidth))
   require (coreWidth <= fetchWidth)

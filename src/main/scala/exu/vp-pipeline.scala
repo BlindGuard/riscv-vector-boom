@@ -47,7 +47,7 @@ class VpPipeline(implicit p: Parameters) extends BoomModule with HasVPUParameter
     val dis_uops         = Vec(dispatchWidth, Flipped(Decoupled(new MicroOp)))
 
     // write ports?
-    val ll_wports        = Flipped(Vec(memWidth, Valid(new ExeUnitResp(vLen))))       // from memory unit
+    val ll_wports        = Flipped(Vec(memWidth, Decoupled(new ExeUnitResp(vLen)))) // from memory unit
     // ??? needed?
     //val from_int         = Flipped(Decoupled(new ExeUnitResp(vecWidth+1)))          // from integer RF
     // memory access?
@@ -97,13 +97,13 @@ class VpPipeline(implicit p: Parameters) extends BoomModule with HasVPUParameter
 
 
   val vregister_read = Module(new RegisterRead(
-                         issue_unit.issueWidth,               // total issue width = 1
-                         exe_units(0).supportedFuncUnits,     // sequence of SupportedFuncUnits
-                         numVrfReadPorts,                     // number of read ports
-                         Seq(3),                              // seq of number of read ports per exe unit
-                         0, // No bypass                      // number of bypass ports of exe units
-                         0,                                   // something bypass
-                         vLen))                               // register width
+                         issue_unit.issueWidth,                 // total issue width = 1
+                         Seq(exe_units(0).supportedFuncUnits),  // sequence of SupportedFuncUnits
+                         numVrfReadPorts,                       // number of read ports
+                         Seq(3),                                // seq of number of read ports per exe unit
+                         0, // No bypass                        // number of bypass ports of exe units
+                         0,                                     // something bypass
+                         vLen))                                 // register width
 
   // what does this do?
   // what is xLen?
@@ -185,7 +185,7 @@ class VpPipeline(implicit p: Parameters) extends BoomModule with HasVPUParameter
   // **** Execute Stage ****
   //-------------------------------------------------------------
 
-  exe_units.map(_.io_brupdate := io.brupdate)
+  exe_units.map(_.io.brupdate := io.brupdate)
 
   for (w <- 0 until vpWidth) {
     exe_units(w).io.req <> vregister_read.io.exe_reqs(w)

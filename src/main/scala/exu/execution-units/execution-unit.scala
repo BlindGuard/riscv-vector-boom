@@ -640,7 +640,7 @@ class VPExeUnit(
 
   // connect FuncUnitReq to functional unit input
   vpu.io.req.valid          := io.req.valid && (
-                               io.req.bits.fu_code_is(FC_VPU))
+                               io.req.bits.uop.fu_code_is(FU_VPU))
   vpu.io.req.bits.uop       := io.req.bits.uop
   vpu.io.req.bits.rs1_data  := io.req.bits.rs1_data
   vpu.io.req.bits.rs2_data  := io.req.bits.rs2_data
@@ -676,7 +676,7 @@ class VPExeUnit(
 
   // response from the vpu execution unit
   val io_vpu_resp = IO(Output(Valid(new ExeUnitResp(xLen+1))))
-  io_vpu_resp.valid := vpu.io.resp.valid && !vpu.io.resp.bits.uop.fu_code_is(FC_VPU)
+  io_vpu_resp.valid := vpu.io.resp.valid && !vpu.io.resp.bits.uop.fu_code_is(FU_VPU)
   io_vpu_resp.bits  := vpu.io.resp.bits
   // ---
 

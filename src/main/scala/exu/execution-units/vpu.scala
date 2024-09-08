@@ -4,6 +4,10 @@ import chisel3._
 import chisel3.util._
 import chisel3.experimental.dataview._
 import org.chipsalliance.cde.config.Parameters
+
+import freechips.rocketchip.rocket
+import freechips.rocketchip.tile.{CoreBundle, HasCoreParameters}
+
 import boomvec.common._
 
 /** Find out what these do:
@@ -47,7 +51,7 @@ case class VPUParams(
 trait HasVPUParameters {
   // HasFPUParameters here:
   // https://github.com/chipsalliance/rocket-chip/blob/dbcb06afe1c76d1129cb6d264949322a34c37185/src/main/scala/tile/FPU.scala#L304
-  vLen: Int
+  //val vLen: Int
 }
 
 // ????
@@ -90,7 +94,7 @@ class UOPCodeVPUDecoder(implicit p: Parameters) extends BoomModule with HasVPUPa
     //                            | | | | ren3 | | | | | |  | | | |
     //                            | | | | |  | | | | | | |  | | | |
     Array(
-      BitPat(uopFNMSUB_S) -> List(X,X,Y,Y,Y, N,N,S,S,N,N,N, Y,N,N,Y)
+      BitPat(uopFNMSUB_S) -> List(X,X,Y,Y,Y, N,N,X,X,N,N,N, Y,N,N,Y)
     )
 
   val decoder = rocket.DecodeLogic(io.uopc, default, instruction_table)
@@ -106,23 +110,23 @@ class VpuReq()(implicit p: Parameters) extends BoomBundle
   val rs2_data = Bits(512.W)
 }
 
-class VecInput(implicit p: Parameters) extends CoreBundle()(p) with HasVPUCtrlSigs {
-  val rm = Bits(FPConstants.RM_SZ.W)
-  val fmaCmd = Bits(2.W)
-  val typ = Bits(2.W)
-  val fmt = Bits(2.W)
-  val in1 = Bits((fLen+1).W)
-  val in2 = Bits((fLen+1).W)
-  val in3 = Bits((fLen+1).W)
+// class VecInput(implicit p: Parameters) extends CoreBundle()(p) with HasVPUCtrlSigs {
+//   val rm = Bits(VPConstants.RM_SZ.W)
+//   val fmaCmd = Bits(2.W)
+//   val typ = Bits(2.W)
+//   val fmt = Bits(2.W)
+//   val in1 = Bits((fLen+1).W)
+//   val in2 = Bits((fLen+1).W)
+//   val in3 = Bits((fLen+1).W)
 
-}
+// }
 
 class VectorLane(implicit p: Parameters) extends BoomModule with HasVPUParameters
 {
   val io = IO(new Bundle {
     val in1 = Input(UInt(65.W))
     val in2 = Input(UInt(65.W))
-    val fn = Input(UInt(aluFn.SZ_ALU_FN.W))
+    val fn = Input(UInt((new freechips.rocketchip.rocket.ALUFN).SZ_ALU_FN.W))
 
     val out = Bits(65.W)
   })
@@ -136,7 +140,7 @@ class VectorLane(implicit p: Parameters) extends BoomModule with HasVPUParameter
 
 }
 
-class VPU(implicit p: Parameters) extends BoomModule with HasVPUParameters
+class VPU(implicit p: Parameters) extends BoomModule with HasVPUParameters with HasCoreParameters
 {
   val io = IO(new Bundle {
     val req = Flipped(new ValidIO(new VpuReq))
@@ -147,9 +151,9 @@ class VPU(implicit p: Parameters) extends BoomModule with HasVPUParameters
 
   val vec_decoder = Module(new UOPCodeVPUDecoder)
   vec_decoder.io.uopc := io_req.uop.uopc
-  val vec_ctrl = fp_decoder.io.sigs
+  val vec_ctrl = vec_decoder.io.sigs
   // what is this??
-  val vec_rm = Mux(io_req.uop.fp_rm === 7.U, io_req.fcsr_rm, io_req.uop.fp_rm)
+  //val vec_rm = Mux(io_req.uop.fp_rm === 7.U, io_req.fcsr_rm, io_req.uop.fp_rm)
 
   // create all vector lane instances
   val vector_lanes: Seq[VectorLane] = (0 until 7) map { w =>
