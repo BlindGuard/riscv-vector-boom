@@ -47,9 +47,10 @@ class VpPipeline(implicit p: Parameters) extends BoomModule with HasVPUParameter
     val dis_uops         = Vec(dispatchWidth, Flipped(Decoupled(new MicroOp)))
 
     // write ports?
-    val ll_wports        = Flipped(Vec(memWidth, Decoupled(new ExeUnitResp(vLen)))) // from memory unit
-    // ??? needed?
-    //val from_int         = Flipped(Decoupled(new ExeUnitResp(vecWidth+1)))          // from integer RF
+    val ll_wports        = Flipped(Vec(memWidth, Decoupled(new ExeUnitResp(vLen))))   // from memory unit
+    // needed to read scalar values
+    // eg base memory address
+    val from_int         = Flipped(Decoupled(new ExeUnitResp(xLen)))                  // from integer RF
     // memory access?
     val to_sdq           = Decoupled(new ExeUnitResp(vLen))                           // to Load/Store Unit
     // ??? needed?

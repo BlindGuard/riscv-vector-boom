@@ -103,11 +103,11 @@ class UOPCodeVPUDecoder(implicit p: Parameters) extends BoomModule with HasVPUPa
 /**
  * Bundle representing data to be sent to the VPU
  */
-class VpuReq()(implicit p: Parameters) extends BoomBundle
+class VpuReq()(implicit p: Parameters) extends BoomBundle with HasCoreParameters
 {
   val uop      = new MicroOp()
-  val rs1_data = Bits(512.W)
-  val rs2_data = Bits(512.W)
+  val rs1_data = Bits(vLen.W)
+  val rs2_data = Bits(vLen.W)
 }
 
 // class VecInput(implicit p: Parameters) extends CoreBundle()(p) with HasVPUCtrlSigs {
@@ -121,16 +121,25 @@ class VpuReq()(implicit p: Parameters) extends BoomBundle
 
 // }
 
-class VectorLane(implicit p: Parameters) extends BoomModule with HasVPUParameters
+/**
+  * Class representing a single vector lane.
+  * One lane executes an arithmetic operation on part of the vector 
+  * that was put into the VPU.
+  *
+  * @param laneIndex Identifier of the lane
+  */
+class VectorLane(val laneIndex: Int)(implicit p: Parameters) extends BoomModule with HasVPUParameters
 {
   val io = IO(new Bundle {
-    val in1 = Input(UInt(65.W))
-    val in2 = Input(UInt(65.W))
+    val in1 = Input(UInt(xLen.W))
+    val in2 = Input(UInt(xLen.W))
     val fn = Input(UInt((new freechips.rocketchip.rocket.ALUFN).SZ_ALU_FN.W))
 
-    val out = Bits(65.W)
+    val out = Output(UInt(xLen.W))
+    val tag = UInt(8.W)
   })
 
+  io.tag := laneIndex.U
   val alu = Module(new freechips.rocketchip.rocket.ALU())
 
   alu.io.in1 := io.in1
@@ -140,41 +149,103 @@ class VectorLane(implicit p: Parameters) extends BoomModule with HasVPUParameter
 
 }
 
+// not used, remove!
+class QueueEntry(implicit p: Parameters) extends BoomBundle()(p)
+{
+  val tag       = UInt(8.W)                       // from which vector lane is the addr
+  val addr      = Valid(UInt(coreMaxAddrBits.W))  // the address that should be loaded
+  val executed  = Bool()                          // true when request was sent
+  val data      = UInt(coreDataBits.W)            // loaded data
+  val loaded    = Bool()                          // true when data is loaded
+
+  val req = new rocket.HellaCacheReq()
+}
+
 class VPU(implicit p: Parameters) extends BoomModule with HasVPUParameters with HasCoreParameters
 {
   val io = IO(new Bundle {
     val req = Flipped(new ValidIO(new VpuReq))
-    val resp = new ValidIO(new ExeUnitResp(65))
+
+    val resp = new ValidIO(new ExeUnitResp(vLen))
+
+    val mem = new rocket.HellaCacheIO
   })
 
   val io_req = io.req.bits
+  val lanes = 8
 
   val vec_decoder = Module(new UOPCodeVPUDecoder)
   vec_decoder.io.uopc := io_req.uop.uopc
   val vec_ctrl = vec_decoder.io.sigs
-  // what is this??
-  //val vec_rm = Mux(io_req.uop.fp_rm === 7.U, io_req.fcsr_rm, io_req.uop.fp_rm)
 
   // create all vector lane instances
-  val vector_lanes: Seq[VectorLane] = (0 until 7) map { w =>
-    Module(new VectorLane()).suggestName(s"vector_lane_${w}")
+  val vector_lanes: Seq[VectorLane] = (0 until lanes) map { w =>
+    Module(new VectorLane(w)).suggestName(s"vector_lane_${w}")
   }
 
-  // connect request data to vector lanes
+  // internal buffer for memory requests
+  val queue = Reg(Vec(lanes, Valid(new rocket.HellaCacheReq())))
+
+  // arbiter for the cache IO
+  val mem_arb = Module(new Arbiter(new rocket.HellaCacheReq(), lanes))
+  io.mem.req := mem_arb.io.out
+
   var lane = 0
   for (vl <- vector_lanes) {
     var start_bit = lane * 32
     var end_bit = start_bit + 31
 
+    // connect request data to vector lanes
     vl.io.in1 := (io_req.rs1_data(start_bit, end_bit)).asUInt
     vl.io.in2 := (io_req.rs2_data(start_bit, end_bit)).asUInt
+    
+    // connect lane output to the "queue"
+    queue(lane).bits.addr := vl.io.out
+    queue(lane).bits.tag := vl.io.tag
+
+    // connect queue to arbiter
+    mem_arb.io.in(lane) <> queue(lane).bits
+
+    // set ALU function as ADD hardcoded
+    vl.io.fn := (new freechips.rocketchip.rocket.ALUFN).FN_ADD
+    
     lane += 1
   }
 
-  // setting response
+  // collect responses and build vector from them
+  val mem_resp = Reg(Vec(lanes, Valid(new rocket.HellaCacheResp())))
+  mem_resp(io.mem.resp.bits.tag) := io.mem.resp
+
+  // when all responses are valid,
+  // all data was loaded from memory
+  // we just need to assemble it into a vector 
+  // and set it as data in the ExeUnitResp
+  when(mem_resp(0).bits.has_data &&
+       mem_resp(1).bits.has_data &&
+       mem_resp(2).bits.has_data &&
+       mem_resp(3).bits.has_data &&
+       mem_resp(4).bits.has_data &&
+       mem_resp(5).bits.has_data &&
+       mem_resp(6).bits.has_data &&
+       mem_resp(7).bits.has_data )
+  {
+    for (i <- 0 until lanes) 
+    {
+      var start_bit = lane * 32
+      var end_bit = start_bit + 31
+
+      io.resp.bits.data(start_bit, end_bit) := mem_resp(i).bits.data
+    }
+
+    io.resp.bits.uop := io.req.bits.uop
+    io.resp.valid := true.B
+  }
+
+  // default values for the response
   io.resp.bits.uop          := DontCare
   io.resp.bits.predicated   := DontCare
-  io.resp.bits.data         := DontCare         // was set in fpu
+  io.resp.bits.data         := DontCare
   io.resp.bits.fflags.valid := io.resp.valid
+  io.resp.valid             := false.B
   io.resp.bits.fflags.bits  := DontCare         // was set in fpu
 }
