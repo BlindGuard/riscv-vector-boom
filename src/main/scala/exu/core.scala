@@ -45,6 +45,7 @@ import boomvec.common._
 import boomvec.ifu.{GlobalHistory, HasBoomFrontendParameters}
 import boomvec.exu.FUConstants._
 import boomvec.util._
+import freechips.rocketchip.rocket.HellaCacheIO
 
 /**
  * Top level core object that connects the Frontend to the rest of the pipeline.
@@ -62,6 +63,7 @@ class BoomCore()(implicit p: Parameters) extends BoomModule
     val ptw_tlb = new freechips.rocketchip.rocket.TLBPTWIO()
     val trace = Output(new TraceBundle)
     val fcsr_rm = UInt(freechips.rocketchip.tile.FPConstants.RM_SZ.W)
+    val vpu_cache = new HellaCacheIO()
   })
 
   io.ptw_tlb := DontCare
@@ -90,7 +92,10 @@ class BoomCore()(implicit p: Parameters) extends BoomModule
 
   // Vector pipeline
   var vp_pipeline: VpPipeline = null
-  if (usingVPU) vp_pipeline = Module(new VpPipeline)
+  if (usingVPU) {
+    vp_pipeline = Module(new VpPipeline)
+    vp_pipeline.io.mem <> io.vpu_cache
+  } 
 
   // clear vector pipeline?
 
@@ -110,7 +115,7 @@ class BoomCore()(implicit p: Parameters) extends BoomModule
   val dec_brmask_logic = Module(new BranchMaskGenerationLogic(coreWidth))
   val rename_stage     = Module(new RenameStage(coreWidth, numIntPhysRegs, numIntRenameWakeupPorts, false))
   val fp_rename_stage  = if (usingFPU) Module(new RenameStage(coreWidth, numFpPhysRegs, numFpWakeupPorts, true)) else null
-  val vp_rename_stage  = if (usingVPU) Module(new RenameStage(coreWidth, numVecPhysRegs, numVecWakeupPorts, true)) else null
+  val vp_rename_stage  = if (usingVPU) Module(new RenameStage(coreWidth, numVecPhysRegs, numVecWakeupPorts, false)) else null
   val pred_rename_stage = Module(new PredRenameStage(coreWidth, ftqSz, 1))
   var rename_stages    = Seq(rename_stage, pred_rename_stage)
 
@@ -793,6 +798,8 @@ class BoomCore()(implicit p: Parameters) extends BoomModule
   for (i <- 0 until issueParams.size) {
     if (issueParams(i).iqType == IQT_FP.litValue) {
        fp_pipeline.io.dis_uops <> dispatcher.io.dis_uops(i)
+    } else if(issueParams(i).iqType == IQT_VP.litValue) {
+       vp_pipeline.io.dis_uops <> dispatcher.io.dis_uops(i)
     } else {
        issue_units(iu_idx).io.dis_uops <> dispatcher.io.dis_uops(i)
        iu_idx += 1

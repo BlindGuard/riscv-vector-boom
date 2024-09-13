@@ -179,6 +179,12 @@ class BoomTileModuleImp(outer: BoomTile) extends BaseTileModuleImp(outer){
   //fpuOpt foreach { fpu => core.io.fpu <> fpu.io } RocketFpu - not needed in boom
   core.io.rocc := DontCare
 
+  // connect cache request from VPU to the cache
+  val vpuCacheIF = Module(new SimpleHellaCacheIF()(outer.p))
+  vpuCacheIF.io.requestor <> core.io.vpu_cache
+  hellaCachePorts += vpuCacheIF.io.cache
+
+  
   // RoCC
   if (outer.roccs.size > 0) {
     val (respArb, cmdRouter) = {

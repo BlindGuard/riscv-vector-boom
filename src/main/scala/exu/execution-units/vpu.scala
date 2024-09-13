@@ -184,11 +184,11 @@ class VPU(implicit p: Parameters) extends BoomModule with HasVPUParameters with 
   }
 
   // internal buffer for memory requests
-  val queue = Reg(Vec(lanes, Valid(new rocket.HellaCacheReq())))
+  val queue = Reg(Vec(lanes, new DecoupledIO(new rocket.HellaCacheReq())))
 
   // arbiter for the cache IO
   val mem_arb = Module(new Arbiter(new rocket.HellaCacheReq(), lanes))
-  io.mem.req := mem_arb.io.out
+  io.mem.req <> mem_arb.io.out
 
   var lane = 0
   for (vl <- vector_lanes) {
@@ -196,15 +196,15 @@ class VPU(implicit p: Parameters) extends BoomModule with HasVPUParameters with 
     var end_bit = start_bit + 31
 
     // connect request data to vector lanes
-    vl.io.in1 := (io_req.rs1_data(start_bit, end_bit)).asUInt
-    vl.io.in2 := (io_req.rs2_data(start_bit, end_bit)).asUInt
+    vl.io.in1 := (io_req.rs1_data(end_bit, start_bit)).asUInt
+    vl.io.in2 := (io_req.rs2_data(end_bit, start_bit)).asUInt
     
     // connect lane output to the "queue"
     queue(lane).bits.addr := vl.io.out
     queue(lane).bits.tag := vl.io.tag
 
     // connect queue to arbiter
-    mem_arb.io.in(lane) <> queue(lane).bits
+    mem_arb.io.in(lane) <> queue(lane)
 
     // set ALU function as ADD hardcoded
     vl.io.fn := (new freechips.rocketchip.rocket.ALUFN).FN_ADD
@@ -229,13 +229,15 @@ class VPU(implicit p: Parameters) extends BoomModule with HasVPUParameters with 
        mem_resp(6).bits.has_data &&
        mem_resp(7).bits.has_data )
   {
-    for (i <- 0 until lanes) 
-    {
-      var start_bit = lane * 32
-      var end_bit = start_bit + 31
+    io.resp.bits.data := Cat(Seq(mem_resp(0).bits.data, mem_resp(1).bits.data, mem_resp(2).bits.data, mem_resp(3).bits.data, mem_resp(4).bits.data, mem_resp(5).bits.data, mem_resp(6).bits.data, mem_resp(7).bits.data))
 
-      io.resp.bits.data(start_bit, end_bit) := mem_resp(i).bits.data
-    }
+    // for (i <- 0 until lanes) 
+    // {
+    //   var start_bit = lane * 32
+    //   var end_bit = start_bit + 31
+
+    //   io.resp.bits.data(end_bit, start_bit) := mem_resp(i).bits.data
+    // }
 
     io.resp.bits.uop := io.req.bits.uop
     io.resp.valid := true.B

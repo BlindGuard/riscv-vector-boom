@@ -28,6 +28,7 @@ import freechips.rocketchip.rocket.{PipelinedMultiplier,BP,BreakpointUnit,Causes
 import boomvec.common._
 import boomvec.ifu._
 import boomvec.util._
+import freechips.rocketchip.rocket.HellaCacheIO
 
 /**t
  * Functional unit constants
@@ -734,6 +735,10 @@ class VPUUnit(dataWidth: Int)(implicit p: Parameters)
     earliestBypassStage =0,
     dataWidth = dataWidth)
 {
+  val vpu_io = IO(new Bundle {
+    val mem_io = new HellaCacheIO()
+  })
+
   // vpu instance
   // connect to request
   var vpu = Module(new VPU())
@@ -741,6 +746,9 @@ class VPUUnit(dataWidth: Int)(implicit p: Parameters)
   vpu.io.req.bits.uop      := io.req.bits.uop
   vpu.io.req.bits.rs1_data := io.req.bits.rs1_data
   vpu.io.req.bits.rs2_data := io.req.bits.rs2_data
+
+  // passthrough of cache connection
+  vpu.io.mem <> vpu_io.mem_io
 
   // connect response
   io.resp.bits.data               := vpu.io.resp.bits.data

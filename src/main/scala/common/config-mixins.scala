@@ -98,9 +98,11 @@ class WithNSmallBooms(n: Int = 1) extends Config(
               issueParams = Seq(
                 IssueParams(issueWidth=1, numEntries=8, iqType=IQT_MEM.litValue, dispatchWidth=1),
                 IssueParams(issueWidth=1, numEntries=8, iqType=IQT_INT.litValue, dispatchWidth=1),
-                IssueParams(issueWidth=1, numEntries=8, iqType=IQT_FP.litValue , dispatchWidth=1)),
+                IssueParams(issueWidth=1, numEntries=8, iqType=IQT_FP.litValue , dispatchWidth=1),
+                IssueParams(issueWidth=1, numEntries=8, iqType=IQT_VP.litValue , dispatchWidth=1)),
               numIntPhysRegisters = 52,
               numFpPhysRegisters = 48,
+              numVecPhysRegisters = 32,
               numLdqEntries = 8,
               numStqEntries = 8,
               maxBrCount = 8,

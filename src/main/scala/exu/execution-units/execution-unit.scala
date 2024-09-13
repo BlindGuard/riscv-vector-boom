@@ -28,6 +28,7 @@ import FUConstants._
 import boomvec.common._
 import boomvec.ifu.{GetPCFromFtqIO}
 import boomvec.util.{ImmGen, IsKilledByBranch, BranchKillableQueue, BoomCoreStringPrefix}
+import freechips.rocketchip.rocket.HellaCacheIO
 
 /**
  * Response from Execution Unit. Bundles a MicroOp with data
@@ -61,8 +62,8 @@ class FFlagsResp(implicit p: Parameters) extends BoomBundle
  * @param readsFrf does this exe unit need a integer regfile port
  * @param writesFrf does this exe unit need a integer regfile port
  * @param readsVrf
- * @param writesVrf
- * @param writesLlVrf
+ * @param writesVrf does this exe unit need a vector regfile port
+ * @param writesLlVrf does this exe unit need a vector regfile port
  * @param writesLlIrf does this exe unit need a integer regfile port
  * @param writesLlFrf does this exe unit need a integer regfile port
  * @param numBypassStages number of bypass ports for the exe unit
@@ -145,6 +146,8 @@ abstract class ExecutionUnit(
 
     // TODO move this out of ExecutionUnit
     val com_exception = if (hasMem || hasRocc) Input(Bool()) else null
+
+    val cache_io = if (hasVpu) new HellaCacheIO() else null
   })
 
   io.req.ready := false.B
@@ -192,7 +195,7 @@ abstract class ExecutionUnit(
   // TODO add "number of fflag ports", so we can properly account for FPU+Mem combinations
   def hasFFlags     : Boolean = hasFpu || hasFdiv
 
-  require ((hasFpu || hasFdiv) ^ (hasAlu || hasMul || hasMem || hasIfpu),
+  require (((hasFpu || hasFdiv) ^ (hasAlu || hasMul || hasMem || hasIfpu) || hasVpu),
     "[execute] we no longer support mixing FP and Integer functional units in the same exe unit.")
   def hasFcsr = hasIfpu || hasFpu || hasFdiv
 
@@ -240,6 +243,7 @@ class ALUExeUnit(
     writesIrf        = hasAlu || hasMul || hasDiv,
     writesLlIrf      = hasMem || hasRocc,
     writesLlFrf      = (hasIfpu || hasMem) && p(tile.TileKey).core.fpu != None,
+    writesLlVrf      = hasMem,
     numBypassStages  =
       if (hasAlu && hasMul) 3 //TODO XXX p(tile.TileKey).core.imulLatency
       else if (hasAlu) 1 else 0,
@@ -610,6 +614,9 @@ class VPExeUnit(
     bypassable = false,
     hasVpu = hasVpu)
 {
+  val v_io = IO(new Bundle {
+    val mem = new HellaCacheIO()
+  })
   // squash issue??
   // connected to: issue_unit.io.squash_grant
   // val io_squash_iss = IO(Output(Bool()))
@@ -637,6 +644,8 @@ class VPExeUnit(
 
   vpu = Module(new VPUUnit(dataWidth))
   //fu_types += ((FC_VPU, true.B, "VPU"))
+  // passthrough of cache connection
+  vpu.vpu_io.mem_io <> v_io.mem
 
   // connect FuncUnitReq to functional unit input
   vpu.io.req.valid          := io.req.valid && (
@@ -648,8 +657,6 @@ class VPExeUnit(
   vpu.io.req.bits.kill      := io.req.bits.kill
 
   // control signals
-  
-  vpu.io.fcsr_rm    := io.fcsr_rm
   vpu.io.brupdate   := io.brupdate
   vpu.io.resp.ready := DontCare
 

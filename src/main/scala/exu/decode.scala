@@ -30,6 +30,7 @@ abstract trait DecodeConstants
 {
   val xpr64 = Y // TODO inform this from xLen
   val DC2 = BitPat.dontCare(2) // Makes the listing below more readable
+  val DC3 = BitPat.dontCare(3)
   def decode_default: List[BitPat] =
             //                                                                  frs3_en                        wakeup_delay
             //     is val inst?                                                 |  imm sel                     |    bypassable (aka, known/fixed latency)
@@ -42,7 +43,7 @@ abstract trait DecodeConstants
             //     |  |  |  |         |        |        regtype |       |       |  |     |  |  |  |  |  cmd    |    |  |  |  |  flush on commit
             //     |  |  |  |         |        |        |       |       |       |  |     |  |  |  |  |  |      |    |  |  |  |  |  csr cmd
             //     |  |  |  |         |        |        |       |       |       |  |     |  |  |  |  |  |      |    |  |  |  |  |  |
-              List(N, N, X, uopX    , IQT_INT, FU_X   , RT_X  , DC2    ,DC2    ,X, IS_X, X, X, X, X, N, M_X,   DC2, X, X, N, N, X, CSR.X)
+              List(N, N, X, uopX    , IQT_INT, FU_X   , RT_X  , DC3    ,DC3    ,X, IS_X, X, X, X, X, N, M_X,   DC2, X, X, N, N, X, CSR.X)
 
   val table: Array[(BitPat, List[BitPat])]
 }
@@ -465,9 +466,9 @@ object VDecode extends DecodeConstants
               //     |  |  |  |           iq-type func    dst     |       |       |  |     |  |  |  |  |  mem    |    |  |  |  is unique? (clear pipeline for it)
               //     |  |  |  |           |       unit    regtype |       |       |  |     |  |  |  |  |  cmd    |    |  |  |  |  flush on commit
               //     |  |  |  |           |       |       |       |       |       |  |     |  |  |  |  |  |      |    |  |  |  |  |  csr cmd
-  VL1RE32_V   ->List(Y, N, X, uopLD     , IQT_VP, FU_MEM, RT_VEC, RT_VEC, RT_VEC, N, IS_X, Y, N, N, N, N, M_X  , 0.U, N, N, N, N, N, CSR.N),
-  VSE512_V    ->List(Y, N, X, uopSTA    , IQT_VP, FU_MEM, RT_VEC, RT_VEC, RT_VEC, N, IS_X, N, Y, N, N, N, M_X  , 0.U, N, N, N, N, N, CSR.N),
-  VSE32_V     ->List(Y, N, X, uopSTA    , IQT_VP, FU_MEM, RT_VEC, RT_VEC, RT_VEC, N, IS_X, N, Y, N, N, N, M_X  , 0.U, N, N, N, N, N, CSR.N),
+  VL1RE32_V   ->List(Y, N, X, uopLD     , IQT_VP, FU_MEM, RT_VEC, RT_VEC, RT_VEC, N, IS_X, Y, N, N, N, N, M_XRD, 0.U, N, N, N, N, N, CSR.N),
+  VSE512_V    ->List(Y, N, X, uopSTA    , IQT_VP, FU_MEM, RT_VEC, RT_VEC, RT_VEC, N, IS_X, N, Y, N, N, N, M_XWR, 0.U, N, N, N, N, N, CSR.N),
+  VSE32_V     ->List(Y, N, X, uopSTA    , IQT_VP, FU_MEM, RT_VEC, RT_VEC, RT_VEC, N, IS_X, N, Y, N, N, N, M_XWR, 0.U, N, N, N, N, N, CSR.N),
   VRGATHER_VV ->List(Y, N, X, uopVGATHER, IQT_VP, FU_VPU, RT_VEC, RT_VEC, RT_VEC, N, IS_X, N, N, N, N, N, M_X  , 0.U, N, N, N, N, N, CSR.N),
   )
 }
